@@ -1,2 +1,3 @@
 # hello-world
-Just another repository
+
+My name is Rodney, and I want to learn how to code.
