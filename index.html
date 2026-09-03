@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cold Chain — Scooter Delivery</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="shell">
+    <h1 id="title">COLD CHAIN <span>an electric scooter delivery run</span></h1>
+
+    <!-- Everything in the game is drawn onto this one canvas. -->
+    <canvas id="game" width="900" height="640"></canvas>
+
+    <p id="hint">
+      <b>&larr; &rarr;</b> steer &nbsp;·&nbsp; <b>&uarr; &darr;</b> throttle / brake &nbsp;·&nbsp;
+      <b>Z</b> toss left &nbsp;·&nbsp; <b>X</b> toss right &nbsp;·&nbsp; <b>Space</b> toss at nearest curb &nbsp;·&nbsp;
+      <b>P</b> pause
+    </p>
+  </main>
+
+  <!--
+    These are plain <script> tags (not modules) on purpose: it means you can
+    open index.html by double-clicking it, with no web server needed.
+    Order matters — each file uses the ones loaded above it.
+  -->
+  <script src="js/utils.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/world.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/entities.js"></script>
+  <script src="js/hud.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
