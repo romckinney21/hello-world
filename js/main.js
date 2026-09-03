@@ -9,6 +9,15 @@
   // Handy for poking around in the browser console: SD.game.score = 9999
   SD.game = game;
 
+  // Clicking or tapping the canvas starts the game. This matters when the
+  // page is embedded in another site: the click is also what hands keyboard
+  // focus to the game, so the arrow keys start working.
+  canvas.addEventListener('pointerdown', () => {
+    SD.audio.unlock();
+    window.focus();
+    if (game.state === 'title' || game.state === 'gameover') game.start();
+  });
+
   let last = performance.now();
 
   function frame(now) {

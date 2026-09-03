@@ -26,6 +26,27 @@ python3 -m http.server 8000
 # then visit http://localhost:8000
 ```
 
+### Play it online
+
+The game is plain static files, so GitHub Pages can host it for free:
+
+1. Go to **Settings → Pages** in this repository.
+2. Under *Build and deployment*, set **Source** to `Deploy from a branch`,
+   pick the `master` branch and the `/ (root)` folder, and press **Save**.
+3. Wait a minute, then visit **https://romckinney21.github.io/hello-world/**
+
+### One file to share
+
+Want a single file you can email or drop on a USB stick?
+
+```bash
+python3 tools/bundle.py     # writes dist/cold-chain.html
+```
+
+That inlines the CSS and all nine scripts into one self-contained HTML file.
+It's generated, so it isn't committed — run the script again after you change
+anything.
+
 ## Controls
 
 | Key | What it does |

@@ -1,0 +1,3 @@
+# Built by tools/bundle.py — regenerate it rather than committing it, so the
+# single-file version can never drift out of date with the real source.
+dist/
