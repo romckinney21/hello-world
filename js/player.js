@@ -15,7 +15,7 @@
 
     reset() {
       this.x = C.W / 2;
-      this.speed = C.SPEED_MIN;
+      this.speed = C.SPEED_CRUISE;
       this.lean = 0;          // -1 .. 1, purely visual
       this.wobble = 0;        // set by potholes: makes steering drift
       this.invuln = 0;        // brief mercy window after a crash
@@ -43,7 +43,7 @@
     /** Called when you clip a pothole — annoying, not fatal. */
     bump() {
       if (this.crashed) return;
-      this.speed = Math.max(C.SPEED_MIN, this.speed * 0.55);
+      this.speed = this.speed * 0.55;
       this.wobble = 0.9;
       SD.audio.bump();
     }
@@ -54,7 +54,7 @@
 
       if (this.crashed) {
         this.crashTimer -= dt;
-        this.speed = U.lerp(this.speed, C.SPEED_MIN, dt * 2);
+        this.speed = U.lerp(this.speed, C.SPEED_CRUISE, dt * 2);
         if (this.crashTimer <= 0) {
           this.crashTimer = 0;
           this.x = U.clamp(this.x, C.ROAD_LEFT + 40, C.ROAD_RIGHT - 40);
@@ -62,11 +62,21 @@
         return;
       }
 
-      // Throttle and brake.
-      if (input.down('up')) this.speed += C.ACCEL * dt;
-      else if (input.down('down')) this.speed -= C.BRAKE * dt;
-      else this.speed -= C.DRAG * dt;
-      this.speed = U.clamp(this.speed, C.SPEED_MIN, C.SPEED_MAX);
+      // Throttle and brake. Holding the brake carries you down through zero
+      // and into reverse; letting go of both drifts you back to cruising speed
+      // from whichever side you're on.
+      if (input.down('up')) {
+        this.speed += C.ACCEL * dt;
+      } else if (input.down('down')) {
+        this.speed -= C.BRAKE * dt;
+      } else {
+        // Pull back towards cruise — quicker from below, so a reverse doesn't
+        // leave you crawling for ages once you release the keys.
+        const rate = (this.speed < C.SPEED_CRUISE ? C.ACCEL * 0.7 : C.DRAG) * dt;
+        const gap = C.SPEED_CRUISE - this.speed;
+        this.speed += Math.sign(gap) * Math.min(Math.abs(gap), rate);
+      }
+      this.speed = U.clamp(this.speed, C.SPEED_REVERSE, C.SPEED_MAX);
 
       // Steering. You lean into the turn, which is what the sprite shows.
       let dir = 0;
@@ -119,6 +129,13 @@
       ctx.fillStyle = '#111318';
       U.roundRect(ctx, -5, -30, 10, 12, 4); ctx.fill();
       U.roundRect(ctx, -5, 20, 10, 12, 4); ctx.fill();
+
+      // White reversing lights, so it's obvious you're backing up.
+      if (this.speed < -4) {
+        ctx.fillStyle = '#fffbe6';
+        ctx.fillRect(-12, 26, 8, 5);
+        ctx.fillRect(4, 26, 8, 5);
+      }
 
       // Insulated delivery box on the back.
       ctx.fillStyle = '#e2534b';

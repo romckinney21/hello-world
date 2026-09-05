@@ -21,12 +21,15 @@ SD.C = {
   // Where the scooter sits on screen. The world scrolls past it.
   PLAYER_Y: 500,
 
-  // Scooter handling.
-  SPEED_MIN: 110,
+  // Scooter handling. The throttle is one axis running from reverse, through
+  // a standstill, up to full speed — holding the brake past zero backs you up,
+  // which is how you shake a thief off or return to a house you overshot.
+  SPEED_REVERSE: -170, // fastest you can back up (negative = going backwards)
+  SPEED_CRUISE: 110,   // where you settle when you're not touching the controls
   SPEED_MAX: 430,
-  ACCEL: 210,
-  BRAKE: 340,
-  DRAG: 55,            // slows you down when you're not on the throttle
+  ACCEL: 265,
+  BRAKE: 330,
+  DRAG: 60,            // eases you back to cruising speed when you let go
   STEER: 330,
 
   // Tossing a food bag. The sideways reach is deliberately short (about

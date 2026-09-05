@@ -10,8 +10,8 @@ A 2D arcade game in the spirit of the 1985 arcade/NES classic **Paperboy** — e
 you're not throwing newspapers. You're a courier on an electric scooter, and the
 food in your box is getting colder by the second.
 
-Ride down the street, dodge the traffic, and land your delivery bag on the porch
-of the right address **before the food goes cold**.
+Ride down the street, dodge the traffic, and land your delivery bag on the one
+driveway that's lit up — **before the food goes cold**.
 
 No installs, no build step, no libraries. It's plain HTML, CSS and JavaScript.
 
@@ -52,7 +52,8 @@ anything.
 | Key | What it does |
 | --- | --- |
 | `←` `→` (or `A` `D`) | Steer across the street |
-| `↑` `↓` (or `W` `S`) | Throttle / brake |
+| `↑` (or `W`) | Speed up |
+| `↓` (or `S`) | Brake — keep holding it to **reverse** |
 | `Z` | Toss a bag to the **left** |
 | `X` | Toss a bag to the **right** |
 | `Space` | Toss a bag at whichever kerb you're nearest |
@@ -63,22 +64,30 @@ anything.
 
 ## How to play
 
-Your ticket in the top-right names an address — say **#196, LEFT**. That house's
-porch glows on the street ahead of you.
+Somewhere on the street ahead, **one driveway is lit up and pulsing**. That's
+your drop. There are no house numbers to memorise — your ticket only tells you
+which side of the road to look on, and how far it is.
 
 1. **Get onto the right half of the road.** A bag only flies about 190 pixels
-   sideways, so you have to commit to the side the house is on. The left lanes
+   sideways, so you have to commit to the side the drive is on. The left lanes
    are where the oncoming traffic is, which is the whole trade-off.
 2. **Watch the dotted aiming line.** It shows where a bag thrown *right now*
-   would land. Throw when the landing circle is sitting on the porch.
+   would land. Throw when the landing circle is sitting on the lit drive.
 3. **Throw early.** At full speed a bag is in the air for nearly a second, and
    you cover 400 pixels in that time. The faster you go, the further ahead you
    have to lead your target.
-4. **Land it hot.** The heat bar is your real clock. A piping-hot delivery is
-   worth far more than a lukewarm one, and if it hits zero the customer cancels.
+4. **Overshot it? Back up.** Hold `↓` past a standstill and you reverse. A
+   `TURN BACK` banner appears whenever the lit drive is behind you. Riding past
+   an address no longer fails the order — the heat bar is the only clock.
+5. **Land it hot.** A piping-hot delivery is worth far more than a lukewarm one,
+   and if the heat hits zero the customer cancels.
 
-You get **3 bags per order**. Miss with all three, ride past the house, or let
-the food go cold, and the order is refunded — your streak resets with it.
+You get **3 bags per order**. Miss with all three, or let the food go cold, and
+the order is refunded — your streak resets with it.
+
+**Reverse is also your escape.** The thief runs slightly slower than your top
+reverse speed and can only sprint at you for three seconds, so backing off is
+a real way out when he pins you against the kerb.
 
 ### What's out to get you
 
@@ -86,7 +95,7 @@ the food go cold, and the order is refunded — your streak resets with it.
 | --- | --- |
 | 🚗 **Cars** | Oncoming traffic, slow cars ahead, and fast ones overtaking from behind. Hitting one costs a life. |
 | 🐕 **Dogs** | Wait on the sidewalk, then charge at you. They give up after a couple of seconds — outrun them. Costs a life. |
-| 🥷 **Food thief** | A hooded figure who sprints at your scooter to grab a bag, and who will happily pick up a bag that lands near him. Costs you the bag, not a life. |
+| 🥷 **Food thief** | A hooded figure who sprints at your scooter to grab a bag, and who will happily pick up a bag that lands near him. Costs you the bag, not a life. Reverse away from him, or wait out his three-second sprint. |
 | 🕳️ **Potholes** | Kill your speed and shake the handlebars. Annoying, not fatal. |
 
 ### Scoring
@@ -96,10 +105,10 @@ points = (100 + heat × 3 + accuracy bonus) × streak
 ```
 
 - **Heat** — up to +300 for a delivery that's still steaming.
-- **Accuracy** — up to +60 for landing dead centre on the mat (`BULLSEYE!`).
+- **Accuracy** — up to +60 for landing dead centre on the drive (`BULLSEYE!`).
 - **Streak** — every delivery in a row multiplies the lot, up to ×9. One failure
   and you're back to ×1.
-- Feeding the **wrong address** costs you 25 points.
+- Hitting the **wrong driveway** costs you 25 points.
 
 Every 5 orders you start a new shift: the traffic gets heavier, the dogs come
 out more often, and the food cools faster — but you get a life back.
@@ -116,7 +125,7 @@ Everything is drawn onto one `<canvas>` element. The files load in order from
 | `js/utils.js` | Constants (road width, speeds, gravity…) and small maths helpers |
 | `js/audio.js` | Beeps and blips, generated with the Web Audio API — no sound files |
 | `js/input.js` | Keyboard state: what's *held down* vs what was *just tapped* |
-| `js/world.js` | The street: scrolling, the houses, the porches, the scenery |
+| `js/world.js` | The street: scrolling, the houses, the driveways, the scenery |
 | `js/player.js` | The scooter — steering, throttle, crashing, and drawing the rider |
 | `js/entities.js` | Bags, cars, dogs, thieves, potholes, splats and floating text |
 | `js/hud.js` | Score, lives, the delivery ticket, and the title/pause/game-over screens |
@@ -145,7 +154,7 @@ Open `js/utils.js` and edit the numbers in `SD.C` — it's the fastest way to ge
 a feel for how the game is put together:
 
 - `THROW_SIDE` — how far a bag flies sideways. Raise it and deliveries get easy.
-- `SPEED_MAX` — the top speed of the scooter.
+- `SPEED_MAX` / `SPEED_REVERSE` — top speed forwards and backwards.
 - `GRAVITY` — lower it and bags float; raise it and they drop like bricks.
 - `BAGS_PER_ORDER`, `START_LIVES`, `ORDERS_PER_LEVEL` — the generosity dials.
 

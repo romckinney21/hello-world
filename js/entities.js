@@ -169,8 +169,11 @@
         const dy = playerWy - this.wy;
         const len = Math.hypot(dx, dy) || 1;
         const spd = 175;
+        // The `pace` term keeps it alongside you while you ride forward. It
+        // never goes negative, so backing up genuinely shakes a chaser off.
+        const pace = Math.max(0, game.player.speed) * dt * 0.5;
         this.x += (dx / len) * spd * dt;
-        this.wy += (dy / len) * spd * dt + game.player.speed * dt * 0.5;
+        this.wy += (dy / len) * spd * dt + pace;
       } else if (this.charging) {
         // Out of puff: trot back towards the kerb it came from.
         this.x += this.side * 150 * dt;
@@ -220,7 +223,8 @@
       this.side = side;
       this.x = side < 0 ? C.LEFT_WALK + 22 : C.RIGHT_WALK + C.SIDEWALK - 22;
       this.wy = wy;
-      this.state = 'lurk';        // lurk -> hunt -> flee
+      this.state = 'lurk';        // lurk -> hunt -> flee (or giveup)
+      this.huntLeft = 3.0;        // he can only sprint at you for so long
       this.life = 12;
       this.step = 0;
       this.dead = false;
@@ -237,12 +241,20 @@
         this.x += Math.sin(this.step * 0.4) * 14 * dt;
         if (Math.abs(this.wy - playerWy) < 300 && game.bagsLeft > 0) this.state = 'hunt';
       } else if (this.state === 'hunt') {
+        // Slower than a full-tilt reverse on purpose: backing off has to be a
+        // real escape, not a stalemate. He also runs out of puff.
+        this.huntLeft -= dt;
+        if (this.huntLeft <= 0) { this.state = 'giveup'; }
         const dx = game.player.x - this.x;
         const dy = playerWy - this.wy;
         const len = Math.hypot(dx, dy) || 1;
-        const spd = 165;
+        const spd = 138;
+        const pace = Math.max(0, game.player.speed) * dt * 0.5;
         this.x += (dx / len) * spd * dt;
-        this.wy += (dy / len) * spd * dt + game.player.speed * dt * 0.5;
+        this.wy += (dy / len) * spd * dt + pace;
+      } else if (this.state === 'giveup') {
+        // Wanders back to the kerb empty-handed.
+        this.x += this.side * 120 * dt;
       } else {
         // Leg it back to the sidewalk with the loot.
         this.x += this.side * 190 * dt;

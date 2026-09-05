@@ -28,8 +28,6 @@
       this.houses = [];
       this.leftY = 300;   // where the next house on each side will go
       this.rightY = 380;
-      this.leftNo = 100;  // even numbers on the left, like a real street
-      this.rightNo = 101; // odd numbers on the right
       this.props = [];    // trees and bins in the gaps between houses
       this.build(400);
     }
@@ -48,7 +46,6 @@
 
         this.houses.push({
           side: onLeft ? -1 : 1,
-          number: onLeft ? this.leftNo : this.rightNo,
           wy: y,                 // bottom edge of the building, in world units
           depth: depth,          // how long the building is along the street
           wall: palette[0],
@@ -69,13 +66,15 @@
           size: U.rand(0.85, 1.25),
         });
 
-        if (onLeft) { this.leftY += depth + gap; this.leftNo += 2; }
-        else { this.rightY += depth + gap; this.rightNo += 2; }
+        if (onLeft) this.leftY += depth + gap;
+        else this.rightY += depth + gap;
       }
 
-      // Forget houses far behind us so the list can't grow forever.
-      if (this.houses.length > 900) this.houses.splice(0, this.houses.length - 900);
-      if (this.props.length > 900) this.props.splice(0, this.props.length - 900);
+      // Forget only what's a long way behind us, so the list can't grow
+      // forever but reversing never rides off the end of the street.
+      const cutoff = this.scroll - 4000;
+      while (this.houses.length && this.houses[0].porchWy < cutoff) this.houses.shift();
+      while (this.props.length && this.props[0].wy < cutoff) this.props.shift();
     }
 
     /** Convert a world position into a canvas y position. */
@@ -123,11 +122,13 @@
 
     // ---------------------------------------------------------------- drawing
 
-    draw(ctx) {
+    draw(ctx, target, time) {
       this.drawGround(ctx);
-      for (const h of this.visibleHouses()) this.drawHouse(ctx, h);
+      for (const h of this.visibleHouses()) this.drawHouse(ctx, h, h === target);
       this.drawProps(ctx);
       this.drawRoad(ctx);
+      // The lit driveway goes on last so nothing clips its glow.
+      if (target) this.drawDriveway(ctx, target, true, time);
     }
 
     drawProps(ctx) {
@@ -214,7 +215,7 @@
       ctx.lineDashOffset = 0;
     }
 
-    drawHouse(ctx, h) {
+    drawHouse(ctx, h, isTarget) {
       const bottom = this.toScreenY(h.wy);
       const top = this.toScreenY(h.wy + h.depth);
       const height = bottom - top;
@@ -243,55 +244,113 @@
       const doorX = h.side < 0 ? left + width - 8 : left;
       ctx.fillRect(doorX, doorY, 8, 26);
 
-      // The porch: the pad on the sidewalk you are actually aiming at.
-      const px = h.porchX;
-      const py = this.toScreenY(h.porchWy);
-      ctx.fillStyle = h.flash > 0 ? '#63d68a' : '#3d434f';
-      U.roundRect(ctx, px - 21, py - 21, 42, 42, 6);
-      ctx.fill();
-      ctx.fillStyle = h.flash > 0 ? '#a8f0c1' : '#9aa4b5';   // the step you aim at
-      U.roundRect(ctx, px - 15, py - 11, 30, 22, 3);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(0,0,0,.4)';
-      ctx.lineWidth = 2;
-      U.roundRect(ctx, px - 21, py - 21, 42, 42, 6);
-      ctx.stroke();
-
-      // House number on a little plate.
-      ctx.fillStyle = 'rgba(12,16,24,.82)';
-      const plateX = h.side < 0 ? left + width - 46 : left + 6;
-      U.roundRect(ctx, plateX, this.toScreenY(h.porchWy) - 44, 40, 18, 4);
-      ctx.fill();
-      ctx.fillStyle = '#e8edf7';
-      ctx.font = 'bold 13px "Trebuchet MS", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(String(h.number), plateX + 20, this.toScreenY(h.porchWy) - 34);
+      if (!isTarget) this.drawDriveway(ctx, h, false, 0);
     }
 
-    /** Draw the pulsing ring that marks the address you're delivering to. */
+    /**
+     * The driveway: a strip of tarmac running from the kerb up to the front
+     * door. This is the whole targeting system — no house numbers to memorise,
+     * you just look for the one that's lit up.
+     */
+    drawDriveway(ctx, h, lit, time) {
+      const py = this.toScreenY(h.porchWy);
+      if (py < -80 || py > C.H + 80) return;
+
+      // Spans the sidewalk, overlapping the kerb and the house a little so it
+      // reads as joining the two.
+      const x0 = h.side < 0 ? C.BUILDING_DEPTH - 8 : C.ROAD_RIGHT - 4;
+      const w = C.SIDEWALK + 12;
+      const depth = 46;
+
+      ctx.save();
+
+      if (lit) {
+        // Warm pool of light, brightening and fading.
+        const pulse = 0.55 + 0.45 * Math.sin(time * 4.5);
+        ctx.shadowColor = `rgba(255, 198, 84, ${0.55 + 0.35 * pulse})`;
+        ctx.shadowBlur = 26 + pulse * 16;
+        ctx.fillStyle = `rgba(255, 205, 104, ${0.82 + 0.16 * pulse})`;
+        U.roundRect(ctx, x0, py - depth / 2, w, depth, 4);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Chevrons pointing up the drive towards the door.
+        ctx.strokeStyle = `rgba(90, 58, 8, ${0.5 + 0.3 * pulse})`;
+        ctx.lineWidth = 3;
+        for (let i = 0; i < 3; i++) {
+          const cx = h.side < 0 ? x0 + w - 12 - i * 15 : x0 + 12 + i * 15;
+          ctx.beginPath();
+          ctx.moveTo(cx - h.side * 6, py - 10);
+          ctx.lineTo(cx + h.side * 6, py);   // apex points at the front door
+          ctx.lineTo(cx - h.side * 6, py + 10);
+          ctx.stroke();
+        }
+      } else {
+        ctx.fillStyle = h.flash > 0 ? '#63d68a' : '#4a4e57';
+        U.roundRect(ctx, x0, py - depth / 2, w, depth, 4);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,.32)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    /**
+     * Points you at the lit driveway. On screen it's a bobbing chevron; off
+     * the top it's a marker pinned to the edge; off the bottom it means you
+     * have overshot, and says so — that's what reverse is for.
+     */
     drawTargetMarker(ctx, house, time) {
       if (!house) return;
       const py = this.toScreenY(house.porchWy);
-      if (py < -60 || py > C.H + 60) return;
-
-      const pulse = 0.5 + 0.5 * Math.sin(time * 6);
-      ctx.save();
-      ctx.strokeStyle = `rgba(120, 232, 255, ${0.5 + 0.45 * pulse})`;
-      ctx.lineWidth = 3 + pulse * 2;
-      U.roundRect(ctx, house.porchX - 24, py - 24, 48, 48, 8);
-      ctx.stroke();
-
-      // Bouncing arrow above the porch.
       const bob = Math.sin(time * 6) * 4;
-      ctx.fillStyle = '#78e8ff';
+      ctx.save();
+
+      if (py < 150) {
+        // Still ahead of you, off the top of the screen. Sits below the HUD
+        // panels, at the x of the drive, so you know which side to move to.
+        this.edgeMarker(ctx, house.porchX, 154 + bob, -1, '#ffc654');
+      } else if (py > C.H - 26) {
+        // Behind you. One banner in the clear space at the bottom centre.
+        const pulse = 0.5 + 0.5 * Math.sin(time * 6);
+        const bw = 320, bh = 36, bx = C.W / 2 - bw / 2, by = C.H - 62;
+        ctx.fillStyle = `rgba(58, 14, 12, ${0.72 + 0.16 * pulse})`;
+        U.roundRect(ctx, bx, by, bw, bh, 18); ctx.fill();
+        ctx.strokeStyle = `rgba(255, 122, 106, ${0.6 + 0.4 * pulse})`;
+        ctx.lineWidth = 2; ctx.stroke();
+
+        this.edgeMarker(ctx, bx + 30, by + bh / 2 - 2 + bob * 0.5, 1, '#ff7a6a');
+
+        ctx.fillStyle = '#ffb3aa';
+        ctx.font = 'bold 17px "Trebuchet MS", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('TURN BACK \u2014 HOLD \u2193', C.W / 2 + 16, by + bh / 2);
+      } else {
+        // On screen: bob a chevron just above the glowing drive.
+        ctx.fillStyle = '#ffc654';
+        ctx.beginPath();
+        ctx.moveTo(house.porchX, py - 34 + bob);
+        ctx.lineTo(house.porchX - 10, py - 50 + bob);
+        ctx.lineTo(house.porchX + 10, py - 50 + bob);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    /** A triangle pinned to the top or bottom edge. `dir` is -1 up, 1 down. */
+    edgeMarker(ctx, x, y, dir, color) {
+      ctx.fillStyle = color;
       ctx.beginPath();
-      ctx.moveTo(house.porchX, py - 30 + bob);
-      ctx.lineTo(house.porchX - 9, py - 44 + bob);
-      ctx.lineTo(house.porchX + 9, py - 44 + bob);
+      ctx.moveTo(x, y + dir * 14);
+      ctx.lineTo(x - 12, y - dir * 10);
+      ctx.lineTo(x + 12, y - dir * 10);
       ctx.closePath();
       ctx.fill();
-      ctx.restore();
     }
   }
 

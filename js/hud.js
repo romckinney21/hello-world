@@ -65,22 +65,23 @@ SD.hud = (function () {
       return;
     }
 
-    const ahead = Math.max(0, Math.round(game.target.porchWy - game.world.playerWy));
+    const gap = Math.round(game.target.porchWy - game.world.playerWy);
     const onLeft = game.target.side < 0;
 
-    text(ctx, 'DELIVER TO', x + 16, 30, 12, '#8fa0c0');
-    text(ctx, ahead > 0 ? `${ahead} m ahead` : 'YOU PASSED IT!', x + w - 16, 30, 13,
-      ahead > 0 ? '#c6d2e8' : '#ff7a6a', 'right', 'normal');
+    text(ctx, 'NEXT DROP', x + 16, 30, 12, '#8fa0c0');
+    text(ctx, gap > 0 ? `${gap} m ahead` : `${-gap} m behind`, x + w - 16, 30, 13,
+      gap > 0 ? '#c6d2e8' : '#ff7a6a', 'right', 'normal');
 
-    text(ctx, `#${game.target.number}`, x + 16, 58, 30, '#ffd76e');
+    // No house numbers to memorise — you're looking for the lit driveway,
+    // so the ticket only has to tell you which side of the street it's on.
+    text(ctx, onLeft ? '\u25c0 LEFT' : 'RIGHT \u25b6', x + 16, 58, 26,
+      onLeft ? '#9ad7ff' : '#ffb3d1');
 
-    // A chip showing which kerb to aim at.
-    const chipW = 92;
-    ctx.fillStyle = onLeft ? 'rgba(122,196,255,.22)' : 'rgba(255,150,196,.22)';
-    U.roundRect(ctx, x + w - 16 - chipW, 46, chipW, 24, 12);
+    const litW = 116;
+    ctx.fillStyle = 'rgba(255, 198, 84, .2)';
+    U.roundRect(ctx, x + w - 16 - litW, 46, litW, 24, 12);
     ctx.fill();
-    text(ctx, onLeft ? '\u25c0 LEFT' : 'RIGHT \u25b6', x + w - 16 - chipW / 2, 58, 15,
-      onLeft ? '#9ad7ff' : '#ffb3d1', 'center');
+    text(ctx, 'LIT DRIVEWAY', x + w - 16 - litW / 2, 58, 13, '#ffc654', 'center');
 
     // Heat bar — this is your real timer.
     const barX = x + 16, barY = 80, barW = 238, barH = 16;
@@ -111,12 +112,27 @@ SD.hud = (function () {
   function drawSpeed(ctx, game) {
     const x = 20, y = C.H - 74;
     panel(ctx, x, y, 150, 54);
-    const pct = (game.player.speed - C.SPEED_MIN) / (C.SPEED_MAX - C.SPEED_MIN);
-    text(ctx, 'SPEED', x + 12, y + 16, 11, '#8fa0c0');
+    const spd = game.player.speed;
+    text(ctx, spd < -4 ? 'REVERSE' : 'SPEED', x + 12, y + 16, 11,
+      spd < -4 ? '#ffc654' : '#8fa0c0');
+
+    // The bar runs both ways from a zero mark, so reverse is readable.
+    const barX = x + 12, barY = y + 28, barW = 126, barH = 12;
+    const zero = barX + barW * (-C.SPEED_REVERSE / (C.SPEED_MAX - C.SPEED_REVERSE));
     ctx.fillStyle = 'rgba(255,255,255,.12)';
-    U.roundRect(ctx, x + 12, y + 28, 126, 12, 6); ctx.fill();
-    ctx.fillStyle = pct > 0.8 ? '#ff8a3d' : '#7fe3a1';
-    U.roundRect(ctx, x + 12, y + 28, Math.max(4, 126 * pct), 12, 6); ctx.fill();
+    U.roundRect(ctx, barX, barY, barW, barH, 6); ctx.fill();
+
+    const scale = barW / (C.SPEED_MAX - C.SPEED_REVERSE);
+    if (spd >= 0) {
+      ctx.fillStyle = spd > C.SPEED_MAX * 0.8 ? '#ff8a3d' : '#7fe3a1';
+      U.roundRect(ctx, zero, barY, Math.max(3, spd * scale), barH, 3); ctx.fill();
+    } else {
+      const len = Math.max(3, -spd * scale);
+      ctx.fillStyle = '#ffc654';
+      U.roundRect(ctx, zero - len, barY, len, barH, 3); ctx.fill();
+    }
+    ctx.fillStyle = 'rgba(255,255,255,.5)';
+    ctx.fillRect(zero - 1, barY - 2, 2, barH + 4);
   }
 
   /** Big centred message, e.g. "DELIVERED!" or "TOO COLD". */
@@ -142,12 +158,13 @@ SD.hud = (function () {
     text(ctx, 'Electric scooter food delivery', C.W / 2, 178, 20, '#c6d2e8', 'center', 'normal');
 
     const lines = [
-      '\u2190 \u2192  steer across the street        \u2191 \u2193  throttle and brake',
+      '\u2190 \u2192  steer across the street        \u2191  faster        \u2193  brake, then reverse',
       'Z  toss a bag left        X  toss a bag right        SPACE  toss at the nearest kerb',
       '',
-      'Land the bag on the glowing porch of the address on your ticket.',
+      'One driveway on the street is lit up. That is your drop \u2014 land the bag on it.',
+      'Overshot it? Hold \u2193 to back up. Reversing also shakes a thief off you.',
       'Dodge cars, dogs, potholes and the hooded food thief.',
-      'Deliver before it goes cold — the hotter it lands, the bigger the score.',
+      'Deliver before it goes cold \u2014 the hotter it lands, the bigger the score.',
     ];
     lines.forEach((l, i) => text(ctx, l, C.W / 2, 232 + i * 29, 16, '#aebbd4', 'center', 'normal'));
 

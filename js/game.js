@@ -176,7 +176,7 @@
       if (house && this.target) {
         // Feeding the wrong address costs you.
         this.score = Math.max(0, this.score - 25);
-        this.effects.push(new SD.FloatText(bag.x, bag.wy, `WRONG HOUSE #${house.number}`, '#ff9f5a'));
+        this.effects.push(new SD.FloatText(bag.x, bag.wy, 'WRONG DRIVEWAY', '#ff9f5a'));
       } else {
         this.effects.push(new SD.FloatText(bag.x, bag.wy, 'MISS', '#c6d2e8'));
       }
@@ -344,11 +344,11 @@
         // Never fail an order while a bag is still in the air — it might yet
         // land on the right porch. A throw leads the target by a long way at
         // full speed, so you are often past the house before it touches down.
+        // Overshooting the drive is no longer an instant fail: you can back up
+        // and try again. The heat bar is the only clock on an order now.
         const settled = this.bags.length === 0;
         if (settled && this.heat <= 0) {
           this.finishOrder(false, 'FOOD WENT COLD', '#7fc9ff');
-        } else if (settled && this.world.playerWy > this.target.porchWy + 140) {
-          this.finishOrder(false, 'MISSED THE ADDRESS', '#ff7a6a');
         } else if (settled && this.bagsLeft <= 0) {
           this.finishOrder(false, 'OUT OF BAGS', '#ff9f5a');
         }
@@ -406,13 +406,11 @@
         ctx.translate(U.rand(-6, 6) * this.shake, U.rand(-6, 6) * this.shake);
       }
 
-      this.world.draw(ctx);
+      this.world.draw(ctx, this.target, this.time);
 
       // Ground-level things first, so flying bags end up on top.
       for (const e of this.entities) if (e instanceof SD.Pothole) e.draw(ctx, this.world);
       for (const f of this.effects) if (f instanceof SD.Splat) f.draw(ctx, this.world);
-
-      this.world.drawTargetMarker(ctx, this.target, this.time);
 
       if (this.state === 'playing' && this.target && this.bagsLeft > 0) {
         this.drawAim(ctx, -1, this.target.side < 0);
@@ -428,6 +426,8 @@
 
       if (this.state === 'title') { SD.hud.drawTitle(ctx, this); return; }
       SD.hud.draw(ctx, this);
+      // Drawn last so an off-screen pointer is never hidden behind a panel.
+      if (this.state !== 'gameover') this.world.drawTargetMarker(ctx, this.target, this.time);
       if (this.state === 'paused') SD.hud.drawPaused(ctx);
       if (this.state === 'gameover') SD.hud.drawGameOver(ctx, this);
     }
