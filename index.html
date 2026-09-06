@@ -310,7 +310,7 @@
     <div>
       <section class="section">
         <h2>Sizes &amp; quantity</h2>
-        <p class="hint">Prices are per print, in inches. Tap a size to see how your image crops into it.</p>
+        <p class="hint">Prices are per print, in inches. <span id="maxNote"></span> Tap a size to see how your image crops into it.</p>
         <div class="panel" id="rows"></div>
       </section>
 
@@ -371,12 +371,14 @@ var PRICE_LIST = [
   { w: 5,  h: 7,  price: 12 },
   { w: 8,  h: 10, price: 25 },
   { w: 11, h: 14, price: 45 },
-  { w: 12, h: 18, price: 60 },
-  { w: 16, h: 20, price: 85 },
-  { w: 18, h: 24, price: 110 },
-  { w: 20, h: 30, price: 150 },
-  { w: 24, h: 36, price: 200 }
+  { w: 12, h: 18, price: 60 }
 ];
+
+/* The widest paper you can run through the printer, in inches. Any size in the
+   list whose narrow side is wider than this is hidden from customers, so you
+   can't be ordered a print you can't make. A 12 x 18 still works at 12: it only
+   needs 12 inches of paper width, and runs 18 inches long. */
+var MAX_PRINT_WIDTH_IN = 12;
 
 /* Your shop details. Leave email as "" and the Email button stays hidden,
    so customers just copy the summary instead. */
@@ -387,6 +389,12 @@ var SHOP = { name: "", email: "" };
 var STARTING_QUANTITIES = { "5x7": 2, "8x10": 1 };
 
 /* ========================================================================== */
+
+/* What's left once the printer's width limit is applied — everything below
+   this point works from SIZES, never from the raw price list. */
+var SIZES = PRICE_LIST.filter(function (size) {
+  return Math.min(size.w, size.h) <= MAX_PRINT_WIDTH_IN;
+});
 
 var state = {
   fileName: "Sample image",
@@ -453,7 +461,7 @@ function cropNote(m) {
 /* --- Building the size rows ------------------------------------------- */
 
 function buildRows() {
-  PRICE_LIST.forEach(function (size) {
+  SIZES.forEach(function (size) {
     var k = key(size);
     var row = document.createElement("button");
     row.type = "button";
@@ -518,7 +526,7 @@ function bump(size, by) {
 
 function lines() {
   var out = [];
-  PRICE_LIST.forEach(function (size) {
+  SIZES.forEach(function (size) {
     var n = state.qty[key(size)] || 0;
     if (n > 0) out.push({ size: size, n: n, line: n * size.price });
   });
@@ -531,7 +539,7 @@ function render() {
   picked.forEach(function (l) { total += l.line; prints += l.n; });
 
   /* Size rows */
-  PRICE_LIST.forEach(function (size) {
+  SIZES.forEach(function (size) {
     var k = key(size);
     var ref = rowRefs[k];
     var n = state.qty[k] || 0;
@@ -783,12 +791,14 @@ document.getElementById("copy").addEventListener("click", function () {
 });
 
 if (SHOP.name) document.getElementById("shopEyebrow").textContent = SHOP.name;
+document.getElementById("maxNote").textContent =
+  "We print up to " + MAX_PRINT_WIDTH_IN + " in wide, any length.";
 
 buildRows();
 Object.keys(STARTING_QUANTITIES).forEach(function (k) {
   if (rowRefs[k]) state.qty[k] = STARTING_QUANTITIES[k];
 });
-state.focus = Object.keys(state.qty)[0] || key(PRICE_LIST[0]);
+state.focus = Object.keys(state.qty)[0] || (SIZES.length ? key(SIZES[0]) : null);
 adoptImage(sampleImage(), "Sample image", true);
 </script>
 </body>

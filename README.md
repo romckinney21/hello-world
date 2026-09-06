@@ -47,6 +47,23 @@ page. **The prices in there now are placeholders — put your real ones in.**
 Sizes are auto-oriented to the image, so one `{ w: 8, h: 10 }` entry covers both
 8×10 and 10×8. You don't need a separate line for each orientation.
 
+### Your printer's width limit
+
+```js
+var MAX_PRINT_WIDTH_IN = 12;
+```
+
+The widest paper you can run through the printer. Any size whose **narrow side**
+is wider than this is hidden from customers, so nobody can order a print you
+can't make. Length isn't limited — a 12×18 only needs 12 inches of paper width
+and runs 18 inches long, so it stays available at `12`.
+
+The page tells customers the limit too ("We print up to 12 in wide, any
+length"), so a size that's missing doesn't look like an oversight.
+
+If you get a wider printer, raise this number **and** add the new sizes to
+`PRICE_LIST` — the limit only hides sizes, it doesn't invent them.
+
 ### Two other settings, just below the price list
 
 ```js
