@@ -23,7 +23,7 @@
     --ok: #2E6B3C;
     --warn: #8F5510;
     --bad: #A32E27;
-    --shade: rgba(10, 18, 22, 0.62);
+    --check: #D8E0E4;
   }
   /* System-dark viewers (no explicit choice stamped on <html>) */
   @media (prefers-color-scheme: dark) {
@@ -41,7 +41,7 @@
       --ok: #74CE8B;
       --warn: #DFA45C;
       --bad: #E67C72;
-      --shade: rgba(3, 8, 10, 0.7);
+      --check: #2A343B;
     }
   }
   /* Explicit dark choice wins in the other direction */
@@ -59,7 +59,7 @@
     --ok: #74CE8B;
     --warn: #DFA45C;
     --bad: #E67C72;
-    --shade: rgba(3, 8, 10, 0.7);
+    --check: #2A343B;
   }
 
   * { box-sizing: border-box; }
@@ -78,7 +78,7 @@
   .eyebrow {
     font-family: "IBM Plex Mono", ui-monospace, monospace;
     font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
-    color: var(--ink-3);
+    color: var(--ink-3); margin: 0;
   }
   h1 {
     font-family: Archivo, ui-sans-serif, system-ui, sans-serif;
@@ -101,30 +101,36 @@
     overflow: hidden;
   }
 
-  /* ---------- Image viewer + crop overlay ---------- */
+  /* ---------- Artwork viewer: the transfer area, with art fitted inside ---- */
   .viewer {
     background: var(--surface-2);
     border-bottom: 1px solid var(--line);
     padding: 20px;
-    display: flex; align-items: center; justify-content: center;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
     min-height: 210px;
   }
   .viewer.drag { outline: 2px dashed var(--accent); outline-offset: -8px; }
-  .frame { position: relative; display: inline-block; line-height: 0; overflow: hidden; }
-  .frame img { display: block; max-width: 100%; max-height: 250px; }
-  .cropbox {
-    position: absolute;
-    box-shadow: 0 0 0 9999px var(--shade);
-    outline: 2px solid var(--accent);
-    outline-offset: -1px;
-    transition: left .2s ease, top .2s ease, width .2s ease, height .2s ease;
+  .stage { width: 100%; display: flex; justify-content: center; }
+  .placement {
+    width: 100%;
+    max-width: calc(224px * var(--ar, 1));
+    aspect-ratio: var(--ar, 1);
+    border: 2px dashed var(--accent);
+    background-color: var(--surface);
+    background-image:
+      linear-gradient(45deg, var(--check) 25%, transparent 25%),
+      linear-gradient(-45deg, var(--check) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, var(--check) 75%),
+      linear-gradient(-45deg, transparent 75%, var(--check) 75%);
+    background-size: 14px 14px;
+    background-position: 0 0, 0 7px, 7px -7px, -7px 0;
+    transition: max-width .2s ease, aspect-ratio .2s ease;
   }
-  .cropcap {
-    position: absolute; left: 0; right: 0; bottom: 0;
+  .placement img { display: block; width: 100%; height: 100%; object-fit: contain; }
+  .fitcap {
     font-family: "IBM Plex Mono", ui-monospace, monospace;
-    font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase;
-    color: var(--accent-ink); background: var(--accent);
-    padding: 3px 7px; line-height: 1.35; text-align: center;
+    font-size: 11.5px; color: var(--ink-2); text-align: center; margin: 0;
+    font-variant-numeric: tabular-nums;
   }
 
   .spec {
@@ -164,22 +170,31 @@
   .section + .section { margin-top: 26px; }
   .hint { font-size: 13px; color: var(--ink-2); margin: 0 0 12px; }
 
-  /* ---------- Size rows ---------- */
+  /* ---------- Placement rows, grouped the way the size guide groups them --- */
+  .group {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 10.5px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--ink-3); background: var(--surface-2);
+    padding: 7px 16px; border-top: 1px solid var(--line);
+  }
+  .group:first-child { border-top: 0; }
   .row {
     display: grid; grid-template-columns: minmax(0, 1fr) auto;
     align-items: center; gap: 6px 16px;
-    padding: 11px 16px; border-top: 1px solid var(--line);
+    padding: 10px 16px; border-top: 1px solid var(--line);
     cursor: pointer; background: none; border-left: 0; border-right: 0; border-bottom: 0;
     width: 100%; text-align: left; color: inherit; font: inherit;
   }
-  .row:first-child { border-top: 0; }
+  .group + .row { border-top: 0; }
   .row.active { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
   .row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-  .size {
+  .name { font-size: 14px; font-weight: 500; }
+  .meta {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px 9px; margin-top: 3px;
+    font-size: 12.5px; color: var(--ink-2);
     font-family: "IBM Plex Mono", ui-monospace, monospace;
-    font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums;
+    font-variant-numeric: tabular-nums;
   }
-  .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 9px; margin-top: 3px; font-size: 12.5px; color: var(--ink-2); }
   .chip {
     font-family: "IBM Plex Mono", ui-monospace, monospace;
     font-size: 10px; font-weight: 500; letter-spacing: 0.09em; text-transform: uppercase;
@@ -193,7 +208,7 @@
   .right { display: flex; align-items: center; gap: 14px; }
   .each {
     font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13px;
-    color: var(--ink-2); font-variant-numeric: tabular-nums; min-width: 58px; text-align: right;
+    color: var(--ink-2); font-variant-numeric: tabular-nums; min-width: 56px; text-align: right;
   }
   .stepper { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
   .stepper button {
@@ -242,7 +257,7 @@
   textarea { resize: vertical; }
   .summary {
     font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; line-height: 1.55;
-    white-space: pre; overflow-x: auto; min-height: 210px;
+    white-space: pre; overflow-x: auto; min-height: 240px;
   }
   .btn {
     font-family: Archivo, ui-sans-serif, sans-serif; font-size: 14px; font-weight: 600;
@@ -266,51 +281,53 @@
 <div class="wrap">
 
   <header>
-    <p class="eyebrow" id="shopEyebrow">Print order</p>
-    <h1>Price your prints before you send them</h1>
-    <p class="lede">Drop in the image you want printed, choose your sizes and quantities, and the total works itself out. You'll get an order summary to copy and send back.</p>
+    <p class="eyebrow" id="shopEyebrow">DTF transfers</p>
+    <h1>Size and price your transfers before you order</h1>
+    <p class="lede">Drop in your artwork, pick the placements you want it printed for, and the total works itself out. You'll get an order summary to copy and send back with your file.</p>
   </header>
 
   <div class="cols">
 
-    <!-- ============ LEFT: image, specs, running total ============ -->
+    <!-- ============ LEFT: artwork, specs, running total ============ -->
     <div class="col-left">
       <div class="panel">
         <div class="viewer" id="viewer">
-          <div class="frame" id="frame">
-            <img id="photo" alt="The image you're having printed">
-            <div class="cropbox" id="cropbox"><div class="cropcap" id="cropcap"></div></div>
+          <div class="stage">
+            <div class="placement" id="placement">
+              <img id="artwork" alt="Your artwork, fitted inside the selected transfer size">
+            </div>
           </div>
+          <p class="fitcap" id="fitcap"></p>
         </div>
 
         <dl class="spec">
-          <dt>File</dt><dd id="specName">Sample image</dd>
+          <dt>File</dt><dd id="specName">Sample artwork</dd>
           <dt>Pixels</dt><dd id="specPx">—</dd>
-          <dt>Shape</dt><dd id="specShape">—</dd>
+          <dt>Max @300</dt><dd id="specMax">—</dd>
         </dl>
 
         <div class="panel-foot">
-          <label class="visually-hidden" for="file">Choose an image</label>
+          <label class="visually-hidden" for="file">Choose your artwork</label>
           <input class="visually-hidden" type="file" id="file" accept="image/*">
-          <button class="btn small" type="button" id="pick">Use my image</button>
-          <button class="btn small ghost" type="button" id="clear">Clear sizes</button>
+          <button class="btn small" type="button" id="pick">Use my artwork</button>
+          <button class="btn small ghost" type="button" id="clear">Clear order</button>
         </div>
 
         <div class="total">
           <div>
             <div class="total-label">Order total</div>
-            <div class="total-count" id="count">No prints selected yet</div>
+            <div class="total-count" id="count">Nothing selected yet</div>
           </div>
           <div class="amount" id="amount">$0.00</div>
         </div>
       </div>
     </div>
 
-    <!-- ============ RIGHT: sizes, details, summary ============ -->
+    <!-- ============ RIGHT: placements, details, summary ============ -->
     <div>
       <section class="section">
-        <h2>Sizes &amp; quantity</h2>
-        <p class="hint">Prices are per print, in inches. <span id="maxNote"></span> Tap a size to see how your image crops into it.</p>
+        <h2>Placements &amp; quantity</h2>
+        <p class="hint" id="hintLine"></p>
         <div class="panel" id="rows"></div>
       </section>
 
@@ -336,25 +353,25 @@
         <div class="fields" style="margin-top:12px">
           <div>
             <label for="cnotes">Anything we should know</label>
-            <textarea id="cnotes" rows="2" placeholder="Finish, framing, deadline, delivery address…"></textarea>
+            <textarea id="cnotes" rows="2" placeholder="Garment colours, deadline, placement notes, delivery address…"></textarea>
           </div>
         </div>
       </section>
 
       <section class="section">
         <h2>Send it over</h2>
-        <p class="hint">Copy the summary below and send it with your image file.</p>
+        <p class="hint">Copy the summary below and send it with your artwork file.</p>
         <label class="visually-hidden" for="summary">Order summary</label>
-        <textarea class="summary" id="summary" rows="14" readonly></textarea>
+        <textarea class="summary" id="summary" rows="16" readonly></textarea>
         <div class="actions">
           <button class="btn" type="button" id="copy">Copy order summary</button>
           <a class="btn ghost" id="email" hidden href="#">Email this order</a>
-          <span class="said" id="said" hidden>Copied — now send it to us with your image.</span>
+          <span class="said" id="said" hidden>Copied — now send it to us with your artwork.</span>
         </div>
       </section>
 
       <footer>
-        Your image never leaves this page — it's read in your browser only to measure it, so you'll still need to send us the original file. Resolution notes are a guide: 300 dpi is gallery quality, and anything under 150 dpi will look soft at that size.
+        Your artwork never leaves this page — it's read in your browser only to measure it, so you'll still need to send us the original file. Artwork is scaled to fit inside the transfer size with its proportions kept, so the printed size can come out smaller than the placement on one side. 300 dpi is the production standard; below that the transfer prints soft. Sizes follow our DTF size guide and are a starting point — tell us in the notes if you want something different.
       </footer>
     </div>
   </div>
@@ -362,53 +379,104 @@
 
 <script>
 /* ==========================================================================
-   YOUR PRICE LIST — this is the only part you need to edit.
-   w and h are the print size in inches, price is what you charge per print.
-   Add a line, delete a line, or change a number and save the file.
+   YOUR PRICE LIST — this is the main part you edit.
+
+   id     a short unique name. Any two rows must not share one.
+   group  the heading it sits under on the page.
+   name   what the customer reads.
+   w, h   the transfer size in inches, as it sits on the garment.
+   price  what you charge per transfer.
+
+   Sizes come from the DTF Transfer Size Guide. THE PRICES ARE PLACEHOLDERS —
+   put your real ones in.
    ========================================================================== */
 var PRICE_LIST = [
-  { w: 4,  h: 6,  price: 8 },
-  { w: 5,  h: 7,  price: 12 },
-  { w: 8,  h: 10, price: 25 },
-  { w: 11, h: 14, price: 45 },
-  { w: 12, h: 18, price: 60 }
+  /* --- Full front ------------------------------------------------------- */
+  { id: "ff-infant",      group: "Full front", name: "Infant / onesie",        w: 5,    h: 5,    price: 4 },
+  { id: "ff-toddler",     group: "Full front", name: "Toddler",                w: 7,    h: 7,    price: 6 },
+  { id: "ff-youth-sm",    group: "Full front", name: "Youth S–M",              w: 8,    h: 8,    price: 7 },
+  { id: "ff-youth-lxl",   group: "Full front", name: "Youth L–XL",             w: 9,    h: 9,    price: 8 },
+  { id: "ff-adult",       group: "Full front", name: "Adult S–XL",             w: 10.5, h: 10.5, price: 10 },
+  { id: "ff-adult-plus",  group: "Full front", name: "Adult 2XL–5XL",          w: 12,   h: 12,   price: 12 },
+  { id: "ff-adult-wide",  group: "Full front", name: "Adult 2XL–5XL (wide)",   w: 14,   h: 14,   price: 16 },
+  { id: "ff-oversized",   group: "Full front", name: "Oversized streetwear", w: 12,   h: 16,   price: 15 },
+  { id: "ff-oversized-sq",group: "Full front", name: "Oversized square",       w: 15,   h: 15,   price: 18 },
+
+  /* --- Full back (runs about 1" larger than the matching front) ---------- */
+  { id: "fb-infant",      group: "Full back",  name: "Infant / onesie",        w: 6,    h: 6,    price: 5 },
+  { id: "fb-toddler",     group: "Full back",  name: "Toddler / Youth S–M",    w: 9,    h: 9,    price: 8 },
+  { id: "fb-youth-lxl",   group: "Full back",  name: "Youth L–XL",             w: 10,   h: 10,   price: 9 },
+  { id: "fb-adult",       group: "Full back",  name: "Adult S–XL",             w: 12,   h: 12,   price: 12 },
+  { id: "fb-adult-plus",  group: "Full back",  name: "Adult 2XL–5XL",          w: 12,   h: 14,   price: 14 },
+
+  /* --- Chest & pocket --------------------------------------------------- */
+  { id: "cp-chest",       group: "Chest & pocket", name: "Left chest logo", w: 4,   h: 4,  price: 3 },
+  { id: "cp-chest-lg",    group: "Chest & pocket", name: "Left chest large",      w: 4.5, h: 4.5,price: 3.5 },
+  { id: "cp-pocket",      group: "Chest & pocket", name: "Pocket print",            w: 3.5, h: 3.5,price: 2.5 },
+  { id: "cp-center",      group: "Chest & pocket", name: "Center chest",    w: 10,  h: 8,  price: 9 },
+  { id: "cp-center-plus", group: "Chest & pocket", name: "Center chest 2XL+",     w: 12,  h: 10, price: 11 },
+
+  /* --- Sleeves ---------------------------------------------------------- */
+  { id: "sl-short-youth", group: "Sleeves", name: "Short sleeve youth",     w: 2.5, h: 2.5,  price: 2 },
+  { id: "sl-short",       group: "Sleeves", name: "Short sleeve",             w: 3,   h: 3,    price: 2.5 },
+  { id: "sl-strip",       group: "Sleeves", name: "Standard sleeve strip",    w: 2,   h: 11.25,price: 4 },
+  { id: "sl-strip-bold",  group: "Sleeves", name: "Long sleeve strip", w: 2.5, h: 14,   price: 5.5 },
+
+  /* --- Collar & neck ---------------------------------------------------- */
+  { id: "cn-collar",      group: "Collar & neck", name: "Back collar label", w: 3,   h: 2, price: 2 },
+  { id: "cn-collar-plus", group: "Collar & neck", name: "Back collar (plus)",   w: 3.5, h: 2, price: 2.25 },
+  { id: "cn-neck-label",  group: "Collar & neck", name: "Neck label",                w: 3,   h: 2, price: 2 },
+
+  /* --- Hats & accessories ------------------------------------------------ */
+  { id: "ha-cap",         group: "Hats & accessories", name: "Cap / visor panel", w: 4.75, h: 2.75, price: 3 },
+  { id: "ha-tumbler-16",  group: "Hats & accessories", name: "Tumbler wrap 16 oz",    w: 9.3,  h: 9,    price: 8 },
+  { id: "ha-tumbler-20",  group: "Hats & accessories", name: "Tumbler wrap 20 oz",    w: 9.3,  h: 5,    price: 6 },
+  { id: "ha-cup-decal",   group: "Hats & accessories", name: "Small cup decal",         w: 4,    h: 4,    price: 3 },
+
+  /* --- Gang sheets ------------------------------------------------------- */
+  { id: "gs-12x12",       group: "Gang sheets", name: "Small batch run", w: 12, h: 12, price: 12 },
+  { id: "gs-12x24",       group: "Gang sheets", name: "Standard gang sheet",      w: 12, h: 24, price: 22 },
+  { id: "gs-22x24",       group: "Gang sheets", name: "Larger production run",    w: 22, h: 24, price: 38 },
+  { id: "gs-24x36",       group: "Gang sheets", name: "Max standard sheet",   w: 24, h: 36, price: 60 }
 ];
 
-/* The widest paper you can run through the printer, in inches. Any size in the
-   list whose narrow side is wider than this is hidden from customers, so you
-   can't be ordered a print you can't make. A 12 x 18 still works at 12: it only
-   needs 12 inches of paper width, and runs 18 inches long. */
+/* The widest film you can run through the printer, in inches. Anything in the
+   list that needs more film width than this is hidden from customers, so you
+   can't be ordered a transfer you can't make. It checks the SHORT side of the
+   transfer, because a long narrow one can be turned sideways on the film — a
+   2 x 11.25 sleeve strip only needs 2 inches of width. */
 var MAX_PRINT_WIDTH_IN = 12;
+
+/* The dpi you print at. The size guide works to 300. */
+var TARGET_DPI = 300;
 
 /* Your shop details. Leave email as "" and the Email button stays hidden,
    so customers just copy the summary instead. */
-var SHOP = { name: "", email: "" };
+var SHOP = { name: "Anointed Ones Customs", email: "" };
 
-/* Quantities the page starts with, so a first-time visitor sees how it works.
-   Set this to {} if you'd rather it start empty. */
-var STARTING_QUANTITIES = { "5x7": 2, "8x10": 1 };
+/* What the page starts with, so a first-time visitor sees how it works.
+   Keys are ids from the price list. Set to {} to start empty. */
+var STARTING_QUANTITIES = { "cp-chest": 1, "ff-adult": 1 };
 
 /* ========================================================================== */
 
-/* What's left once the printer's width limit is applied — everything below
-   this point works from SIZES, never from the raw price list. */
+/* What's left once the printer's film width is applied — everything below this
+   point works from SIZES, never from the raw price list. */
 var SIZES = PRICE_LIST.filter(function (size) {
   return Math.min(size.w, size.h) <= MAX_PRINT_WIDTH_IN;
 });
 
 var state = {
-  fileName: "Sample image",
-  isSample: true,
+  fileName: "Sample artwork",
   px: { w: 0, h: 0 },
   qty: {},
   focus: null
 };
 
 var el = {
-  photo: document.getElementById("photo"),
-  frame: document.getElementById("frame"),
-  cropbox: document.getElementById("cropbox"),
-  cropcap: document.getElementById("cropcap"),
+  artwork: document.getElementById("artwork"),
+  placement: document.getElementById("placement"),
+  fitcap: document.getElementById("fitcap"),
   viewer: document.getElementById("viewer"),
   rows: document.getElementById("rows"),
   ticket: document.getElementById("ticket"),
@@ -417,7 +485,7 @@ var el = {
   summary: document.getElementById("summary"),
   specName: document.getElementById("specName"),
   specPx: document.getElementById("specPx"),
-  specShape: document.getElementById("specShape"),
+  specMax: document.getElementById("specMax"),
   file: document.getElementById("file"),
   said: document.getElementById("said"),
   email: document.getElementById("email")
@@ -425,52 +493,55 @@ var el = {
 
 var rowRefs = {};
 
-function key(size) { return size.w + "x" + size.h; }
 function money(n) { return "$" + n.toFixed(2); }
-function label(size) { return size.w + " × " + size.h + " in"; }
+function trim(n) { return String(parseFloat(n.toFixed(2))); }
+function inches(w, h) { return trim(w) + " × " + trim(h) + " in"; }
+function byId(id) { for (var i = 0; i < SIZES.length; i++) if (SIZES[i].id === id) return SIZES[i]; return null; }
 
-/* --- The print maths -------------------------------------------------- */
+/* --- The sizing maths --------------------------------------------------- */
 
-/* A size is turned to match the image, the way a lab would: a landscape
-   photo goes into a 10x8, a portrait one into an 8x10. */
+/* A transfer size is a box the artwork sits inside. The art is scaled down to
+   fit, keeping its proportions, so it touches the box on one side and usually
+   falls short on the other — that's the size that actually gets printed. */
 function measure(size) {
   var iw = state.px.w, ih = state.px.h;
-  var landscape = iw >= ih;
-  var pw = landscape ? Math.max(size.w, size.h) : Math.min(size.w, size.h);
-  var ph = landscape ? Math.min(size.w, size.h) : Math.max(size.w, size.h);
-  var dpi = Math.min(iw / pw, ih / ph);
-  var imgAR = iw / ih, printAR = pw / ph;
-  var cropPct = 0, axis = "";
-  if (imgAR > printAR) { cropPct = 1 - printAR / imgAR; axis = "the sides"; }
-  else if (printAR > imgAR) { cropPct = 1 - imgAR / printAR; axis = "top & bottom"; }
-  return { pw: pw, ph: ph, dpi: dpi, cropPct: cropPct, axis: axis, imgAR: imgAR, printAR: printAR };
+  var art = iw / ih, box = size.w / size.h;
+  var pw, ph, dpi;
+  if (art >= box) {           /* art is the wider shape — width fills the box */
+    pw = size.w; ph = size.w / art; dpi = iw / size.w;
+  } else {                    /* art is the taller shape — height fills it */
+    ph = size.h; pw = size.h * art; dpi = ih / size.h;
+  }
+  return { pw: pw, ph: ph, dpi: dpi, art: art, box: box };
 }
 
 function quality(dpi) {
-  if (dpi >= 300) return { text: "Gallery", cls: "ok" };
-  if (dpi >= 200) return { text: "Good", cls: "ok" };
-  if (dpi >= 150) return { text: "Fair", cls: "warn" };
-  return { text: "Low res", cls: "bad" };
+  if (dpi >= TARGET_DPI) return { text: "Print ready", cls: "ok" };
+  if (dpi >= 200) return { text: "Under " + TARGET_DPI, cls: "warn" };
+  return { text: "Too low", cls: "bad" };
 }
 
-function cropNote(m) {
-  if (m.cropPct < 0.005) return "Fits with no cropping";
-  return "Crops about " + Math.round(m.cropPct * 100) + "% off " + m.axis;
-}
-
-/* --- Building the size rows ------------------------------------------- */
+/* --- Building the rows -------------------------------------------------- */
 
 function buildRows() {
+  var lastGroup = null;
   SIZES.forEach(function (size) {
-    var k = key(size);
+    if (size.group !== lastGroup) {
+      var head = document.createElement("div");
+      head.className = "group";
+      head.textContent = size.group;
+      el.rows.appendChild(head);
+      lastGroup = size.group;
+    }
+
     var row = document.createElement("button");
     row.type = "button";
     row.className = "row";
 
     var left = document.createElement("div");
     var name = document.createElement("div");
-    name.className = "size";
-    name.textContent = label(size);
+    name.className = "name";
+    name.textContent = size.name;
     var meta = document.createElement("div");
     meta.className = "meta";
     left.appendChild(name);
@@ -487,13 +558,13 @@ function buildRows() {
     var minus = document.createElement("button");
     minus.type = "button";
     minus.textContent = "−";
-    minus.setAttribute("aria-label", "One fewer " + label(size));
+    minus.setAttribute("aria-label", "One fewer " + size.name);
     var qty = document.createElement("div");
     qty.className = "qty";
     var plus = document.createElement("button");
     plus.type = "button";
     plus.textContent = "+";
-    plus.setAttribute("aria-label", "One more " + label(size));
+    plus.setAttribute("aria-label", "One more " + size.name);
     stepper.appendChild(minus);
     stepper.appendChild(qty);
     stepper.appendChild(plus);
@@ -506,28 +577,27 @@ function buildRows() {
 
     minus.addEventListener("click", function (e) { e.stopPropagation(); bump(size, -1); });
     plus.addEventListener("click", function (e) { e.stopPropagation(); bump(size, 1); });
-    row.addEventListener("click", function () { state.focus = k; render(); });
+    row.addEventListener("click", function () { state.focus = size.id; render(); });
 
-    rowRefs[k] = { row: row, meta: meta, qty: qty, size: size };
+    rowRefs[size.id] = { row: row, meta: meta, qty: qty, size: size };
   });
 }
 
 function bump(size, by) {
-  var k = key(size);
-  var next = (state.qty[k] || 0) + by;
+  var next = (state.qty[size.id] || 0) + by;
   if (next < 0) next = 0;
   if (next > 999) next = 999;
-  state.qty[k] = next;
-  state.focus = k;
+  state.qty[size.id] = next;
+  state.focus = size.id;
   render();
 }
 
-/* --- Rendering --------------------------------------------------------- */
+/* --- Rendering ---------------------------------------------------------- */
 
 function lines() {
   var out = [];
   SIZES.forEach(function (size) {
-    var n = state.qty[key(size)] || 0;
+    var n = state.qty[size.id] || 0;
     if (n > 0) out.push({ size: size, n: n, line: n * size.price });
   });
   return out;
@@ -535,39 +605,36 @@ function lines() {
 
 function render() {
   var picked = lines();
-  var total = 0, prints = 0;
-  picked.forEach(function (l) { total += l.line; prints += l.n; });
+  var total = 0, count = 0;
+  picked.forEach(function (l) { total += l.line; count += l.n; });
 
-  /* Size rows */
   SIZES.forEach(function (size) {
-    var k = key(size);
-    var ref = rowRefs[k];
-    var n = state.qty[k] || 0;
+    var ref = rowRefs[size.id];
+    var n = state.qty[size.id] || 0;
     var m = measure(size);
     var q = quality(m.dpi);
 
     ref.qty.textContent = n;
     ref.qty.className = "qty" + (n === 0 ? " zero" : "");
-    ref.row.className = "row" + (state.focus === k ? " active" : "");
+    ref.row.className = "row" + (state.focus === size.id ? " active" : "");
 
     ref.meta.textContent = "";
     var chip = document.createElement("span");
     chip.className = "chip " + q.cls;
     chip.textContent = q.text + " · " + Math.round(m.dpi) + " dpi";
     var note = document.createElement("span");
-    note.textContent = cropNote(m);
+    note.textContent = inches(size.w, size.h) +
+      (Math.abs(m.art - m.box) < 0.01 ? "" : "  → prints " + inches(m.pw, m.ph));
     ref.meta.appendChild(chip);
     ref.meta.appendChild(note);
   });
 
-  /* Totals */
   el.amount.textContent = money(total);
-  el.count.textContent = prints === 0
-    ? "No prints selected yet"
-    : prints + (prints === 1 ? " print" : " prints") + " across " + picked.length +
-      (picked.length === 1 ? " size" : " sizes");
+  el.count.textContent = count === 0
+    ? "Nothing selected yet"
+    : count + (count === 1 ? " transfer" : " transfers") + " across " + picked.length +
+      (picked.length === 1 ? " placement" : " placements");
 
-  /* Ticket */
   el.ticket.textContent = "";
   if (picked.length === 0) {
     var empty = document.createElement("p");
@@ -576,13 +643,12 @@ function render() {
     el.ticket.appendChild(empty);
   } else {
     picked.forEach(function (l) {
-      var m = measure(l.size);
       var line = document.createElement("div");
       line.className = "ticket-line";
       var a = document.createElement("span");
       a.textContent = l.n + "×";
       var b = document.createElement("span");
-      b.textContent = m.pw + " × " + m.ph + " in";
+      b.textContent = l.size.name + " · " + inches(l.size.w, l.size.h);
       var c = document.createElement("span");
       c.textContent = money(l.line);
       line.appendChild(a); line.appendChild(b); line.appendChild(c);
@@ -599,70 +665,70 @@ function render() {
     el.ticket.appendChild(foot);
   }
 
-  drawCrop();
-  el.summary.value = summaryText(picked, total, prints);
+  drawFit();
+  el.summary.value = summaryText(picked, total, count);
   updateEmailLink();
   el.said.hidden = true;
 }
 
-function drawCrop() {
-  var k = state.focus;
-  if (!k || !rowRefs[k] || !state.px.w) { el.cropbox.hidden = true; return; }
-  el.cropbox.hidden = false;
-  var m = measure(rowRefs[k].size);
-  var w = 100, h = 100;
-  if (m.imgAR > m.printAR) w = (m.printAR / m.imgAR) * 100;
-  else if (m.printAR > m.imgAR) h = (m.imgAR / m.printAR) * 100;
-  el.cropbox.style.width = w + "%";
-  el.cropbox.style.height = h + "%";
-  el.cropbox.style.left = ((100 - w) / 2) + "%";
-  el.cropbox.style.top = ((100 - h) / 2) + "%";
-  el.cropcap.textContent = m.pw + " × " + m.ph + " · " + Math.round(m.dpi) + " dpi";
+/* Draws the transfer area as a dashed box with the artwork fitted inside it,
+   so you can see how much of the transfer the design actually covers. */
+function drawFit() {
+  var size = state.focus ? byId(state.focus) : null;
+  if (!size || !state.px.w) { el.fitcap.textContent = ""; return; }
+  var m = measure(size);
+  el.placement.style.setProperty("--ar", size.w / size.h);
+  el.fitcap.textContent = size.name + " · " + inches(size.w, size.h) +
+    " — art prints " + inches(m.pw, m.ph) + " at " + Math.round(m.dpi) + " dpi";
 }
 
-/* --- The summary the customer sends you -------------------------------- */
+/* --- The summary the customer sends you --------------------------------- */
 
 function pad(s, n) { s = String(s); while (s.length < n) s += " "; return s; }
+function clip(s, n) { s = String(s); return s.length > n ? s.slice(0, n - 1) + "…" : pad(s, n); }
 function padL(s, n) { s = String(s); while (s.length < n) s = " " + s; return s; }
 
-function summaryText(picked, total, prints) {
+function summaryText(picked, total, count) {
   var date = new Date().toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
   var L = [];
-  L.push("PRINT ORDER · " + date + (SHOP.name ? " · " + SHOP.name : ""));
+  L.push("DTF TRANSFER ORDER · " + date + (SHOP.name ? " · " + SHOP.name : ""));
   L.push("");
   L.push(pad("Customer", 10) + (document.getElementById("cname").value || "—"));
   L.push(pad("Contact", 10) + (document.getElementById("cemail").value || "—"));
-  L.push(pad("Image", 10) + state.fileName +
+  L.push(pad("Artwork", 10) + state.fileName +
     (state.px.w ? "  (" + state.px.w + " × " + state.px.h + " px)" : ""));
   L.push("");
 
   if (picked.length === 0) {
-    L.push("No sizes chosen yet.");
+    L.push("No placements chosen yet.");
   } else {
-    L.push(pad("QTY", 5) + pad("SIZE", 16) + padL("EACH", 9) + padL("LINE", 11));
-    L.push("-".repeat(41));
+    L.push(pad("QTY", 4) + pad("PLACEMENT", 34) + pad("SIZE", 14) + padL("EACH", 8) + padL("LINE", 9));
+    L.push("-".repeat(69));
     picked.forEach(function (l) {
-      var m = measure(l.size);
-      L.push(pad(l.n + "×", 5) + pad(m.pw + " × " + m.ph + " in", 16) +
-        padL(money(l.size.price), 9) + padL(money(l.line), 11));
+      L.push(pad(l.n + "×", 4) + clip(l.size.group + " · " + l.size.name, 34) +
+        pad(inches(l.size.w, l.size.h), 14) +
+        padL(money(l.size.price), 8) + padL(money(l.line), 9));
     });
-    L.push("-".repeat(41));
-    L.push(pad(prints + (prints === 1 ? " print" : " prints"), 21) + padL("TOTAL", 9) + padL(money(total), 11));
+    L.push("-".repeat(69));
+    L.push(pad(count + (count === 1 ? " transfer" : " transfers"), 52) +
+      padL("TOTAL", 8) + padL(money(total), 9));
 
-    var soft = picked.filter(function (l) { return measure(l.size).dpi < 150; });
+    var soft = picked.filter(function (l) { return measure(l.size).dpi < TARGET_DPI; });
     if (soft.length) {
       L.push("");
-      L.push("Heads up: " + soft.map(function (l) {
+      L.push("Below " + TARGET_DPI + " dpi from this file — may print soft:");
+      soft.forEach(function (l) {
         var m = measure(l.size);
-        return m.pw + "×" + m.ph;
-      }).join(", ") + " is below 150 dpi from this image and may look soft.");
+        L.push("  " + l.size.name + " (" + inches(l.size.w, l.size.h) + ") at " +
+          Math.round(m.dpi) + " dpi");
+      });
     }
   }
 
   var notes = document.getElementById("cnotes").value.trim();
   if (notes) { L.push(""); L.push("NOTES"); L.push(notes); }
   L.push("");
-  L.push("(The image file is sent separately.)");
+  L.push("(The artwork file is sent separately.)");
   return L.join("\n");
 }
 
@@ -670,84 +736,70 @@ function updateEmailLink() {
   if (!SHOP.email) { el.email.hidden = true; return; }
   el.email.hidden = false;
   el.email.href = "mailto:" + SHOP.email +
-    "?subject=" + encodeURIComponent("Print order") +
+    "?subject=" + encodeURIComponent("DTF transfer order") +
     "&body=" + encodeURIComponent(el.summary.value);
 }
 
-/* --- Loading an image --------------------------------------------------- */
+/* --- Loading artwork ----------------------------------------------------- */
 
-function adoptImage(src, name, isSample) {
+function adoptImage(src, name) {
   var probe = new Image();
   probe.onload = function () {
     state.px = { w: probe.naturalWidth, h: probe.naturalHeight };
     state.fileName = name;
-    state.isSample = !!isSample;
-    el.photo.src = src;
+    el.artwork.src = src;
     el.specName.textContent = name;
-    el.specPx.textContent = state.px.w.toLocaleString() + " × " + state.px.h.toLocaleString() +
-      "  (" + (state.px.w * state.px.h / 1e6).toFixed(1) + " MP)";
-    var ar = state.px.w / state.px.h;
-    el.specShape.textContent = (ar > 1.02 ? "Landscape" : ar < 0.98 ? "Portrait" : "Square") +
-      "  " + ar.toFixed(2) + ":1";
+    el.specPx.textContent = state.px.w.toLocaleString() + " × " + state.px.h.toLocaleString() + " px";
+    el.specMax.textContent = inches(state.px.w / TARGET_DPI, state.px.h / TARGET_DPI);
     render();
   };
   probe.onerror = function () {
-    el.specName.textContent = "Couldn't read that file — try a JPG or PNG.";
+    el.specName.textContent = "Couldn't read that file — try a PNG or JPG.";
   };
   probe.src = src;
 }
 
 function takeFile(file) {
   if (!file || file.type.indexOf("image/") !== 0) {
-    el.specName.textContent = "That's not an image file — try a JPG or PNG.";
+    el.specName.textContent = "That's not an image file — try a PNG or JPG.";
     return;
   }
-  adoptImage(URL.createObjectURL(file), file.name, false);
+  adoptImage(URL.createObjectURL(file), file.name);
 }
 
-/* A stand-in photo so the page shows real numbers before you drop yours in.
-   Drawn here rather than loaded, at the size of an ordinary 6 MP camera file. */
-function sampleImage() {
+/* Stand-in artwork so the page shows real numbers before you drop yours in.
+   Drawn on a transparent background, the way a DTF file arrives. */
+function sampleArtwork() {
   var c = document.createElement("canvas");
-  c.width = 3000; c.height = 2000;
+  c.width = 1800; c.height = 2400;
   var x = c.getContext("2d");
-  var sky = x.createLinearGradient(0, 0, 0, 1300);
-  sky.addColorStop(0, "#12303f");
-  sky.addColorStop(0.55, "#3d6274");
-  sky.addColorStop(1, "#d9a06a");
-  x.fillStyle = sky; x.fillRect(0, 0, 3000, 2000);
+  var cx = 900, cy = 1200;
 
-  x.fillStyle = "#f6d9a8";
-  x.beginPath(); x.arc(2050, 1120, 130, 0, Math.PI * 2); x.fill();
+  x.lineWidth = 70;
+  x.strokeStyle = "#0E6D78";
+  x.beginPath(); x.arc(cx, cy, 620, 0, Math.PI * 2); x.stroke();
 
-  var ridges = [
-    { y: 1180, c: "#2c4b58" },
-    { y: 1320, c: "#223c48" },
-    { y: 1500, c: "#182c36" },
-    { y: 1700, c: "#101f27" }
-  ];
-  ridges.forEach(function (r, i) {
-    x.fillStyle = r.c;
+  x.lineWidth = 22;
+  x.strokeStyle = "#C6853A";
+  x.beginPath(); x.arc(cx, cy, 520, 0, Math.PI * 2); x.stroke();
+
+  x.fillStyle = "#0E6D78";
+  for (var i = 0; i < 3; i++) {
+    var y = cy - 210 + i * 200;
     x.beginPath();
-    x.moveTo(0, 2000);
-    x.lineTo(0, r.y);
-    for (var px = 0; px <= 3000; px += 60) {
-      var n = Math.sin(px / 420 + i * 2.1) * 70 + Math.sin(px / 137 + i) * 26;
-      x.lineTo(px, r.y + n);
-    }
-    x.lineTo(3000, 2000);
-    x.closePath(); x.fill();
-  });
-
-  x.globalAlpha = 0.16; x.fillStyle = "#f6d9a8";
-  for (var i = 0; i < 400; i++) {
-    x.fillRect(Math.random() * 3000, Math.random() * 1150, 3, 3);
+    x.moveTo(cx - 300, y);
+    x.lineTo(cx, y + 150);
+    x.lineTo(cx + 300, y);
+    x.lineTo(cx + 300, y + 90);
+    x.lineTo(cx, y + 240);
+    x.lineTo(cx - 300, y + 90);
+    x.closePath();
+    x.fill();
   }
-  x.globalAlpha = 1;
-  return c.toDataURL("image/jpeg", 0.85);
+  return c.toDataURL("image/png");
 }
 
-/* --- Wiring ------------------------------------------------------------ */
+/* --- Wiring -------------------------------------------------------------- */
 
 document.getElementById("pick").addEventListener("click", function () { el.file.click(); });
 el.file.addEventListener("change", function (e) { takeFile(e.target.files[0]); });
@@ -769,8 +821,9 @@ el.viewer.addEventListener("drop", function (e) {
 
 ["cname", "cemail", "cnotes"].forEach(function (id) {
   document.getElementById(id).addEventListener("input", function () {
-    el.summary.value = summaryText(lines(), lines().reduce(function (t, l) { return t + l.line; }, 0),
-      lines().reduce(function (t, l) { return t + l.n; }, 0));
+    var picked = lines(), total = 0, count = 0;
+    picked.forEach(function (l) { total += l.line; count += l.n; });
+    el.summary.value = summaryText(picked, total, count);
     updateEmailLink();
   });
 });
@@ -791,15 +844,17 @@ document.getElementById("copy").addEventListener("click", function () {
 });
 
 if (SHOP.name) document.getElementById("shopEyebrow").textContent = SHOP.name;
-document.getElementById("maxNote").textContent =
-  "We print up to " + MAX_PRINT_WIDTH_IN + " in wide, any length.";
+document.getElementById("hintLine").textContent =
+  "Prices are per transfer. Sizes are the transfer area — your art is scaled to fit inside, " +
+  "keeping its proportions. We print up to " + MAX_PRINT_WIDTH_IN +
+  " in wide, any length. Tap a placement to see how your art sits in it.";
 
 buildRows();
-Object.keys(STARTING_QUANTITIES).forEach(function (k) {
-  if (rowRefs[k]) state.qty[k] = STARTING_QUANTITIES[k];
+Object.keys(STARTING_QUANTITIES).forEach(function (id) {
+  if (rowRefs[id]) state.qty[id] = STARTING_QUANTITIES[id];
 });
-state.focus = Object.keys(state.qty)[0] || (SIZES.length ? key(SIZES[0]) : null);
-adoptImage(sampleImage(), "Sample image", true);
+state.focus = Object.keys(state.qty)[0] || (SIZES.length ? SIZES[0].id : null);
+adoptImage(sampleArtwork(), "Sample artwork");
 </script>
 </body>
 </html>
