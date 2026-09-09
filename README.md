@@ -106,13 +106,40 @@ length"), so a missing size doesn't look like an oversight.
 ### Two other settings
 
 ```js
-var SHOP = { name: "Anointed Ones Customs", email: "" };
+var SHOP = { name: "Anointed Ones Customs", email: "romckinney21@gmail.com" };
 ```
 
 - `name` — shows at the top of the page and on every order summary.
-- `email` — fill this in and an **Email this order** button appears that opens
-  the customer's mail app with the summary already written. Left empty, the
-  Copy button is the only send path.
+- `email` — where **Email this order** sends. Change this to a business address
+  if you have one; it will be visible to anyone who views the page source once
+  the page is public. Set it back to `""` and the button disappears, leaving
+  Copy as the only send path.
+
+### How an order actually reaches you
+
+There is no server behind this page, so nothing is delivered automatically —
+the customer sends it. Two paths, and both need them to press something:
+
+1. **Email this order** opens their mail app with the whole summary already
+   written and a subject line like *"DTF transfer order — Jane Doe · 5
+   transfers · $23.00"*. Their artwork files attach to that same email, which
+   is the tidiest way to get the order and the files together in one place.
+2. **Copy order summary** puts the text on their clipboard for whatever they
+   already message you on.
+
+Two things to know about the email button:
+
+- It relies on `mailto:`, which does nothing if the device has no mail app set
+  up. That's why Copy is always there as the fallback, and why the page tells
+  customers to use it if the button doesn't open anything.
+- Very large orders make a `mailto:` link long enough that some mail apps
+  truncate it silently. Past `MAILTO_MAX` (8000 characters, roughly a 30-line
+  order) the button hides itself and the page asks the customer to copy and
+  paste instead — better than you receiving half an order without knowing.
+
+If you get tired of waiting on customers to press send, the next step is a form
+service or a Google Sheet that collects orders on its own. That needs the page
+publicly hosted, which GitHub Pages does free from this repo.
 
 ```js
 var TARGET_DPI = 300;
@@ -135,3 +162,5 @@ at the very bottom of the script — delete those two calls to have it open empt
 - Gang sheet packing — how many of a design fit on a 12×24 sheet.
 - Garment colour choice, since it changes whether a white underbase is needed.
 - Shipping and tax on the total.
+- Orders delivered on their own, to a Google Sheet or your inbox, instead of
+  relying on the customer to press send.

@@ -342,6 +342,7 @@
   .btn.small { font-size: 12.5px; padding: 7px 12px; }
   .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; }
   .said { font-size: 13px; color: var(--ok); }
+  .emailnote { font-size: 12.5px; color: var(--ink-2); max-width: 44ch; }
   footer { margin-top: 34px; font-size: 12.5px; color: var(--ink-3); max-width: 70ch; }
   .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
@@ -442,12 +443,13 @@
 
       <section class="section">
         <h2>Send it over</h2>
-        <p class="hint">Copy the summary below and send it with your artwork files.</p>
+        <p class="hint">Send us the summary below along with your artwork files. <strong>Email this order</strong> opens your mail app with it already written — attach your files to that same email and you're done. If the button doesn't open anything, use <strong>Copy order summary</strong> instead.</p>
         <label class="visually-hidden" for="summary">Order summary</label>
         <textarea class="summary" id="summary" rows="18" readonly></textarea>
         <div class="actions">
           <button class="btn" type="button" id="copy">Copy order summary</button>
           <a class="btn ghost" id="email" hidden href="#">Email this order</a>
+          <span class="emailnote" id="emailNote" hidden>This order is too long to hand to your mail app — use Copy, then paste it into an email to us.</span>
           <span class="said" id="said" hidden>Copied — now send it to us with your artwork files.</span>
         </div>
       </section>
@@ -534,7 +536,12 @@ var TARGET_DPI = 300;
 
 /* Your shop details. Leave email as "" and the Email button stays hidden,
    so customers just copy the summary instead. */
-var SHOP = { name: "Anointed Ones Customs", email: "" };
+var SHOP = { name: "Anointed Ones Customs", email: "romckinney21@gmail.com" };
+
+/* Rough ceiling for a mailto: link. Past this, some mail apps quietly truncate
+   or refuse the URL, so a long order points people at Copy instead of handing
+   them an order that got cut off without anyone noticing. */
+var MAILTO_MAX = 8000;
 
 /* Colours used to tell one design from another on screen. Add more if your
    customers routinely send more designs than there are colours here — the
@@ -580,7 +587,8 @@ var el = {
   summary: document.getElementById("summary"),
   file: document.getElementById("file"),
   said: document.getElementById("said"),
-  email: document.getElementById("email")
+  email: document.getElementById("email"),
+  emailNote: document.getElementById("emailNote")
 };
 
 var rowRefs = {};
@@ -1032,12 +1040,33 @@ function summaryText() {
   return L.join("\n");
 }
 
+function orderStats() {
+  var transfers = 0, designs = 0, grand = 0;
+  state.designs.forEach(function (d) {
+    var picked = linesFor(d);
+    if (!picked.length) return;
+    designs += 1;
+    picked.forEach(function (l) { transfers += l.n; grand += l.line; });
+  });
+  return { transfers: transfers, designs: designs, grand: grand };
+}
+
 function updateEmailLink() {
-  if (!SHOP.email) { el.email.hidden = true; return; }
-  el.email.hidden = false;
-  el.email.href = "mailto:" + SHOP.email +
-    "?subject=" + encodeURIComponent("DTF transfer order") +
+  if (!SHOP.email) { el.email.hidden = true; el.emailNote.hidden = true; return; }
+
+  var s = orderStats();
+  var who = document.getElementById("cname").value.trim();
+  var subject = "DTF transfer order" + (who ? " — " + who : "") +
+    (s.transfers ? " · " + plural(s.transfers, "transfer", "transfers") + " · " + money(s.grand) : "");
+  var href = "mailto:" + SHOP.email +
+    "?subject=" + encodeURIComponent(subject) +
     "&body=" + encodeURIComponent(el.summary.value);
+
+  /* Too long to hand over safely — say so rather than send a truncated order */
+  var tooLong = href.length > MAILTO_MAX;
+  el.email.hidden = tooLong;
+  el.emailNote.hidden = !tooLong;
+  if (!tooLong) el.email.href = href;
 }
 
 /* --- Loading artwork ------------------------------------------------------ */
