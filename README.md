@@ -17,6 +17,25 @@ Sizes come from the DTF Transfer Size Guide — full front and back by garment
 size, chest and pocket, sleeves, collar and neck labels, hats and tumblers, and
 gang sheets.
 
+### Several designs in one order
+
+A customer rarely has just one design. Each design they add gets its own tile
+in the strip at the top of the artwork panel, with its own colour, its own name,
+and **its own quantities** — setting 2 sleeve strips on one design never touches
+another. They can drop several files in at once.
+
+Three things keep it clear which design they're pricing:
+
+- A line above the placement list reads "Setting quantities for *Sample emblem*"
+  with that design's colour dot.
+- Each tile shows a running count, so nothing looks lost after switching.
+- A placement already used by another design shows "+1 on other designs" under
+  the row.
+
+Designs are renameable — the filename is just the starting point. The order
+summary is broken out design by design with a subtotal each, then one order
+total, so you can see at a glance what goes where.
+
 ### What it does for the customer
 
 - Reads their artwork in the browser to get its pixel dimensions.
@@ -28,7 +47,8 @@ gang sheets.
 - Produces a plain-text order summary with a **Copy** button.
 
 The artwork never leaves their browser — it's only measured locally, so the
-customer still sends you the original file alongside the summary.
+customer still sends you the original files alongside the summary. The summary
+names each file, so you can match them up.
 
 ### Changing your prices
 
@@ -96,17 +116,22 @@ var SHOP = { name: "Anointed Ones Customs", email: "" };
 
 ```js
 var TARGET_DPI = 300;
-var STARTING_QUANTITIES = { "cp-chest": 1, "ff-adult": 1 };
+var DESIGN_COLORS = ["#C2632C", "#6C5AA8", "#2E7D57", "#B33A63", "#3B6FB0", "#8A6A1C"];
 ```
 
 `TARGET_DPI` is the resolution you print at — it drives the quality flags and
-the "Max @300" reading in the artwork panel. `STARTING_QUANTITIES` is what the
-page opens with so a first-time visitor sees how it works; keys are `id`s from
-the price list, and `{}` starts it empty.
+the "Max @300" reading in the artwork panel. `DESIGN_COLORS` are the colours
+that tell one design from another; the list starts over if a customer adds more
+designs than there are colours, so add more if that happens often.
+
+The page opens with two sample designs so a first-time visitor can see how a
+multi-design order reads. They're created by the two `loadImage(sample…)` calls
+at the very bottom of the script — delete those two calls to have it open empty.
 
 ### Ideas for later
 
-- Bulk discounts (5+ of a placement at a lower unit price).
+- Bulk discounts (5+ of a placement at a lower unit price), counted per design
+  or across the whole order.
 - Gang sheet packing — how many of a design fit on a 12×24 sheet.
 - Garment colour choice, since it changes whether a white underbase is needed.
 - Shipping and tax on the total.

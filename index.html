@@ -25,7 +25,6 @@
     --bad: #A32E27;
     --check: #D8E0E4;
   }
-  /* System-dark viewers (no explicit choice stamped on <html>) */
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --bg: #0D1215;
@@ -44,7 +43,6 @@
       --check: #2A343B;
     }
   }
-  /* Explicit dark choice wins in the other direction */
   :root[data-theme="dark"] {
     --bg: #0D1215;
     --surface: #151B20;
@@ -101,19 +99,68 @@
     overflow: hidden;
   }
 
-  /* ---------- Artwork viewer: the transfer area, with art fitted inside ---- */
+  /* ---------- The design strip: one tile per artwork in the order -------- */
+  .designbar {
+    display: flex; gap: 9px; padding: 12px; overflow-x: auto;
+    border-bottom: 1px solid var(--line);
+  }
+  .tile { position: relative; flex: 0 0 auto; width: 104px; }
+  .tile-main {
+    display: block; width: 100%; padding: 0; cursor: pointer;
+    background: var(--surface); color: inherit; font: inherit;
+    border: 1px solid var(--line); border-radius: 7px; overflow: hidden;
+    text-align: left;
+  }
+  .tile.on .tile-main { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+  .tile-main:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .tile-swatch { display: block; height: 3px; }
+  .tile-thumb {
+    height: 58px; display: flex; align-items: center; justify-content: center;
+    background-color: var(--surface);
+    background-image:
+      linear-gradient(45deg, var(--check) 25%, transparent 25%),
+      linear-gradient(-45deg, var(--check) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, var(--check) 75%),
+      linear-gradient(-45deg, transparent 75%, var(--check) 75%);
+    background-size: 10px 10px;
+    background-position: 0 0, 0 5px, 5px -5px, -5px 0;
+  }
+  .tile-thumb img { max-width: 100%; max-height: 54px; object-fit: contain; display: block; }
+  .tile-name {
+    display: block; padding: 5px 6px 2px; font-size: 11.5px; line-height: 1.25;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .tile-count {
+    display: block; padding: 0 6px 6px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10.5px;
+    color: var(--ink-3); font-variant-numeric: tabular-nums;
+  }
+  .tile-x {
+    position: absolute; top: -6px; right: -6px; width: 20px; height: 20px;
+    border-radius: 50%; border: 1px solid var(--line); background: var(--surface);
+    color: var(--ink-2); font-size: 13px; line-height: 1; cursor: pointer; padding: 0;
+  }
+  .tile-x:hover { color: var(--bad); border-color: var(--bad); }
+  .tile-add {
+    flex: 0 0 auto; width: 104px; min-height: 92px; cursor: pointer;
+    border: 1px dashed var(--line); border-radius: 7px; background: none;
+    color: var(--ink-2); font: inherit; font-size: 12px; line-height: 1.3; padding: 8px;
+  }
+  .tile-add:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ---------- Artwork viewer: transfer area with art fitted inside ------- */
   .viewer {
     background: var(--surface-2);
     border-bottom: 1px solid var(--line);
     padding: 20px;
     display: flex; flex-direction: column; align-items: center; gap: 12px;
-    min-height: 210px;
+    min-height: 210px; justify-content: center;
   }
   .viewer.drag { outline: 2px dashed var(--accent); outline-offset: -8px; }
   .stage { width: 100%; display: flex; justify-content: center; }
   .placement {
     width: 100%;
-    max-width: calc(224px * var(--ar, 1));
+    max-width: calc(212px * var(--ar, 1));
     aspect-ratio: var(--ar, 1);
     border: 2px dashed var(--accent);
     background-color: var(--surface);
@@ -132,10 +179,12 @@
     font-size: 11.5px; color: var(--ink-2); text-align: center; margin: 0;
     font-variant-numeric: tabular-nums;
   }
+  .blank { color: var(--ink-3); font-size: 13.5px; text-align: center; margin: 0; max-width: 30ch; }
 
+  .namefield { padding: 14px 18px 0; }
   .spec {
     display: grid; grid-template-columns: auto minmax(0, 1fr);
-    gap: 5px 16px; padding: 15px 18px;
+    gap: 5px 16px; padding: 14px 18px;
     font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12.5px;
   }
   .spec dt { color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.07em; font-size: 11px; padding-top: 1px; }
@@ -170,7 +219,18 @@
   .section + .section { margin-top: 26px; }
   .hint { font-size: 13px; color: var(--ink-2); margin: 0 0 12px; }
 
-  /* ---------- Placement rows, grouped the way the size guide groups them --- */
+  /* Which design the quantity steppers belong to — this has to be loud */
+  .binding {
+    display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
+    padding: 9px 13px; margin: 0 0 12px;
+    border: 1px solid var(--line); border-radius: 7px; background: var(--surface);
+    font-size: 13.5px;
+  }
+  .binding .dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
+  .binding strong { font-weight: 600; }
+  .binding .muted { color: var(--ink-3); font-size: 12.5px; }
+
+  /* ---------- Placement rows ---------- */
   .group {
     font-family: "IBM Plex Mono", ui-monospace, monospace;
     font-size: 10.5px; letter-spacing: 0.15em; text-transform: uppercase;
@@ -205,6 +265,8 @@
   .chip.ok { color: var(--ok); }
   .chip.warn { color: var(--warn); }
   .chip.bad { color: var(--bad); }
+  /* How many of this placement the OTHER designs already have */
+  .elsewhere { font-size: 11.5px; color: var(--ink-3); }
   .right { display: flex; align-items: center; gap: 14px; }
   .each {
     font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13px;
@@ -218,6 +280,7 @@
   }
   .stepper button:hover { color: var(--accent); }
   .stepper button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .stepper button:disabled { opacity: .4; cursor: not-allowed; }
   .qty {
     width: 34px; text-align: center;
     font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 14px; font-weight: 500;
@@ -226,19 +289,29 @@
     line-height: 30px;
   }
   .qty.zero { color: var(--ink-3); }
+  .rows-off { opacity: .5; pointer-events: none; }
 
-  /* ---------- Ticket ---------- */
+  /* ---------- Ticket, grouped by design ---------- */
   .ticket { padding: 4px 18px 16px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13px; }
+  .ticket-design {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 0 5px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .ticket-design .dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; }
   .ticket-line {
     display: grid; grid-template-columns: 2.4em minmax(0, 1fr) auto;
-    gap: 10px; padding: 6px 0; border-bottom: 1px dotted var(--line);
+    gap: 10px; padding: 5px 0; border-bottom: 1px dotted var(--line);
     font-variant-numeric: tabular-nums;
   }
-  .ticket-line:last-child { border-bottom: 0; }
   .ticket-line span:last-child { text-align: right; }
+  .ticket-sub {
+    display: flex; justify-content: space-between; padding: 6px 0 2px;
+    font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums;
+  }
   .ticket-total {
     display: flex; justify-content: space-between; align-items: baseline;
-    padding: 10px 0 2px; margin-top: 4px; border-top: 1px solid var(--line);
+    padding: 11px 0 2px; margin-top: 6px; border-top: 1px solid var(--line);
     font-variant-numeric: tabular-nums; font-weight: 600;
   }
   .ticket-total .label { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); }
@@ -257,7 +330,7 @@
   textarea { resize: vertical; }
   .summary {
     font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; line-height: 1.55;
-    white-space: pre; overflow-x: auto; min-height: 240px;
+    white-space: pre; overflow-x: auto; min-height: 260px;
   }
   .btn {
     font-family: Archivo, ui-sans-serif, sans-serif; font-size: 14px; font-weight: 600;
@@ -283,33 +356,41 @@
   <header>
     <p class="eyebrow" id="shopEyebrow">DTF transfers</p>
     <h1>Size and price your transfers before you order</h1>
-    <p class="lede">Drop in your artwork, pick the placements you want it printed for, and the total works itself out. You'll get an order summary to copy and send back with your file.</p>
+    <p class="lede">Add each design you want printed, pick the placements for it, and the total works itself out. You'll get an order summary, broken down design by design, to copy and send back with your files.</p>
   </header>
 
   <div class="cols">
 
-    <!-- ============ LEFT: artwork, specs, running total ============ -->
+    <!-- ============ LEFT: designs, artwork, running total ============ -->
     <div class="col-left">
       <div class="panel">
+        <div class="designbar" id="designbar"></div>
+
         <div class="viewer" id="viewer">
-          <div class="stage">
+          <div class="stage" id="stage">
             <div class="placement" id="placement">
               <img id="artwork" alt="Your artwork, fitted inside the selected transfer size">
             </div>
           </div>
           <p class="fitcap" id="fitcap"></p>
+          <p class="blank" id="blank" hidden>No designs yet. Add your artwork to start pricing placements.</p>
         </div>
 
-        <dl class="spec">
-          <dt>File</dt><dd id="specName">Sample artwork</dd>
+        <div class="namefield" id="namefield">
+          <label for="dname">Design name</label>
+          <input id="dname" type="text" placeholder="Name this design">
+        </div>
+
+        <dl class="spec" id="specList">
+          <dt>File</dt><dd id="specName">—</dd>
           <dt>Pixels</dt><dd id="specPx">—</dd>
           <dt>Max @300</dt><dd id="specMax">—</dd>
         </dl>
 
         <div class="panel-foot">
-          <label class="visually-hidden" for="file">Choose your artwork</label>
-          <input class="visually-hidden" type="file" id="file" accept="image/*">
-          <button class="btn small" type="button" id="pick">Use my artwork</button>
+          <label class="visually-hidden" for="file">Add artwork</label>
+          <input class="visually-hidden" type="file" id="file" accept="image/*" multiple>
+          <button class="btn small" type="button" id="pick">Add design</button>
           <button class="btn small ghost" type="button" id="clear">Clear order</button>
         </div>
 
@@ -328,6 +409,7 @@
       <section class="section">
         <h2>Placements &amp; quantity</h2>
         <p class="hint" id="hintLine"></p>
+        <p class="binding" id="binding"></p>
         <div class="panel" id="rows"></div>
       </section>
 
@@ -360,18 +442,18 @@
 
       <section class="section">
         <h2>Send it over</h2>
-        <p class="hint">Copy the summary below and send it with your artwork file.</p>
+        <p class="hint">Copy the summary below and send it with your artwork files.</p>
         <label class="visually-hidden" for="summary">Order summary</label>
-        <textarea class="summary" id="summary" rows="16" readonly></textarea>
+        <textarea class="summary" id="summary" rows="18" readonly></textarea>
         <div class="actions">
           <button class="btn" type="button" id="copy">Copy order summary</button>
           <a class="btn ghost" id="email" hidden href="#">Email this order</a>
-          <span class="said" id="said" hidden>Copied — now send it to us with your artwork.</span>
+          <span class="said" id="said" hidden>Copied — now send it to us with your artwork files.</span>
         </div>
       </section>
 
       <footer>
-        Your artwork never leaves this page — it's read in your browser only to measure it, so you'll still need to send us the original file. Artwork is scaled to fit inside the transfer size with its proportions kept, so the printed size can come out smaller than the placement on one side. 300 dpi is the production standard; below that the transfer prints soft. Sizes follow our DTF size guide and are a starting point — tell us in the notes if you want something different.
+        Your artwork never leaves this page — it's read in your browser only to measure it, so you'll still need to send us the original files. Name your designs the same way in the message and we'll match them up. Artwork is scaled to fit inside the transfer size with its proportions kept, so the printed size can come out smaller than the placement on one side. 300 dpi is the production standard; below that the transfer prints soft. Sizes follow our DTF size guide and are a starting point — tell us in the notes if you want something different.
       </footer>
     </div>
   </div>
@@ -392,52 +474,52 @@
    ========================================================================== */
 var PRICE_LIST = [
   /* --- Full front ------------------------------------------------------- */
-  { id: "ff-infant",      group: "Full front", name: "Infant / onesie",        w: 5,    h: 5,    price: 4 },
-  { id: "ff-toddler",     group: "Full front", name: "Toddler",                w: 7,    h: 7,    price: 6 },
-  { id: "ff-youth-sm",    group: "Full front", name: "Youth S–M",              w: 8,    h: 8,    price: 7 },
-  { id: "ff-youth-lxl",   group: "Full front", name: "Youth L–XL",             w: 9,    h: 9,    price: 8 },
-  { id: "ff-adult",       group: "Full front", name: "Adult S–XL",             w: 10.5, h: 10.5, price: 10 },
-  { id: "ff-adult-plus",  group: "Full front", name: "Adult 2XL–5XL",          w: 12,   h: 12,   price: 12 },
-  { id: "ff-adult-wide",  group: "Full front", name: "Adult 2XL–5XL (wide)",   w: 14,   h: 14,   price: 16 },
+  { id: "ff-infant",      group: "Full front", name: "Infant / onesie",      w: 5,    h: 5,    price: 4 },
+  { id: "ff-toddler",     group: "Full front", name: "Toddler",              w: 7,    h: 7,    price: 6 },
+  { id: "ff-youth-sm",    group: "Full front", name: "Youth S–M",            w: 8,    h: 8,    price: 7 },
+  { id: "ff-youth-lxl",   group: "Full front", name: "Youth L–XL",           w: 9,    h: 9,    price: 8 },
+  { id: "ff-adult",       group: "Full front", name: "Adult S–XL",           w: 10.5, h: 10.5, price: 10 },
+  { id: "ff-adult-plus",  group: "Full front", name: "Adult 2XL–5XL",        w: 12,   h: 12,   price: 12 },
+  { id: "ff-adult-wide",  group: "Full front", name: "Adult 2XL–5XL (wide)", w: 14,   h: 14,   price: 16 },
   { id: "ff-oversized",   group: "Full front", name: "Oversized streetwear", w: 12,   h: 16,   price: 15 },
-  { id: "ff-oversized-sq",group: "Full front", name: "Oversized square",       w: 15,   h: 15,   price: 18 },
+  { id: "ff-oversized-sq",group: "Full front", name: "Oversized square",     w: 15,   h: 15,   price: 18 },
 
   /* --- Full back (runs about 1" larger than the matching front) ---------- */
-  { id: "fb-infant",      group: "Full back",  name: "Infant / onesie",        w: 6,    h: 6,    price: 5 },
-  { id: "fb-toddler",     group: "Full back",  name: "Toddler / Youth S–M",    w: 9,    h: 9,    price: 8 },
-  { id: "fb-youth-lxl",   group: "Full back",  name: "Youth L–XL",             w: 10,   h: 10,   price: 9 },
-  { id: "fb-adult",       group: "Full back",  name: "Adult S–XL",             w: 12,   h: 12,   price: 12 },
-  { id: "fb-adult-plus",  group: "Full back",  name: "Adult 2XL–5XL",          w: 12,   h: 14,   price: 14 },
+  { id: "fb-infant",      group: "Full back",  name: "Infant / onesie",      w: 6,    h: 6,    price: 5 },
+  { id: "fb-toddler",     group: "Full back",  name: "Toddler / Youth S–M",  w: 9,    h: 9,    price: 8 },
+  { id: "fb-youth-lxl",   group: "Full back",  name: "Youth L–XL",           w: 10,   h: 10,   price: 9 },
+  { id: "fb-adult",       group: "Full back",  name: "Adult S–XL",           w: 12,   h: 12,   price: 12 },
+  { id: "fb-adult-plus",  group: "Full back",  name: "Adult 2XL–5XL",        w: 12,   h: 14,   price: 14 },
 
   /* --- Chest & pocket --------------------------------------------------- */
-  { id: "cp-chest",       group: "Chest & pocket", name: "Left chest logo", w: 4,   h: 4,  price: 3 },
-  { id: "cp-chest-lg",    group: "Chest & pocket", name: "Left chest large",      w: 4.5, h: 4.5,price: 3.5 },
-  { id: "cp-pocket",      group: "Chest & pocket", name: "Pocket print",            w: 3.5, h: 3.5,price: 2.5 },
-  { id: "cp-center",      group: "Chest & pocket", name: "Center chest",    w: 10,  h: 8,  price: 9 },
-  { id: "cp-center-plus", group: "Chest & pocket", name: "Center chest 2XL+",     w: 12,  h: 10, price: 11 },
+  { id: "cp-chest",       group: "Chest & pocket", name: "Left chest logo",  w: 4,   h: 4,   price: 3 },
+  { id: "cp-chest-lg",    group: "Chest & pocket", name: "Left chest large", w: 4.5, h: 4.5, price: 3.5 },
+  { id: "cp-pocket",      group: "Chest & pocket", name: "Pocket print",     w: 3.5, h: 3.5, price: 2.5 },
+  { id: "cp-center",      group: "Chest & pocket", name: "Center chest",     w: 10,  h: 8,   price: 9 },
+  { id: "cp-center-plus", group: "Chest & pocket", name: "Center chest 2XL+",w: 12,  h: 10,  price: 11 },
 
   /* --- Sleeves ---------------------------------------------------------- */
-  { id: "sl-short-youth", group: "Sleeves", name: "Short sleeve youth",     w: 2.5, h: 2.5,  price: 2 },
-  { id: "sl-short",       group: "Sleeves", name: "Short sleeve",             w: 3,   h: 3,    price: 2.5 },
-  { id: "sl-strip",       group: "Sleeves", name: "Standard sleeve strip",    w: 2,   h: 11.25,price: 4 },
-  { id: "sl-strip-bold",  group: "Sleeves", name: "Long sleeve strip", w: 2.5, h: 14,   price: 5.5 },
+  { id: "sl-short-youth", group: "Sleeves", name: "Short sleeve youth",   w: 2.5, h: 2.5,  price: 2 },
+  { id: "sl-short",       group: "Sleeves", name: "Short sleeve",         w: 3,   h: 3,    price: 2.5 },
+  { id: "sl-strip",       group: "Sleeves", name: "Standard sleeve strip",w: 2,   h: 11.25,price: 4 },
+  { id: "sl-strip-bold",  group: "Sleeves", name: "Long sleeve strip",    w: 2.5, h: 14,   price: 5.5 },
 
   /* --- Collar & neck ---------------------------------------------------- */
-  { id: "cn-collar",      group: "Collar & neck", name: "Back collar label", w: 3,   h: 2, price: 2 },
-  { id: "cn-collar-plus", group: "Collar & neck", name: "Back collar (plus)",   w: 3.5, h: 2, price: 2.25 },
-  { id: "cn-neck-label",  group: "Collar & neck", name: "Neck label",                w: 3,   h: 2, price: 2 },
+  { id: "cn-collar",      group: "Collar & neck", name: "Back collar label",  w: 3,   h: 2, price: 2 },
+  { id: "cn-collar-plus", group: "Collar & neck", name: "Back collar (plus)", w: 3.5, h: 2, price: 2.25 },
+  { id: "cn-neck-label",  group: "Collar & neck", name: "Neck label",         w: 3,   h: 2, price: 2 },
 
   /* --- Hats & accessories ------------------------------------------------ */
-  { id: "ha-cap",         group: "Hats & accessories", name: "Cap / visor panel", w: 4.75, h: 2.75, price: 3 },
-  { id: "ha-tumbler-16",  group: "Hats & accessories", name: "Tumbler wrap 16 oz",    w: 9.3,  h: 9,    price: 8 },
-  { id: "ha-tumbler-20",  group: "Hats & accessories", name: "Tumbler wrap 20 oz",    w: 9.3,  h: 5,    price: 6 },
-  { id: "ha-cup-decal",   group: "Hats & accessories", name: "Small cup decal",         w: 4,    h: 4,    price: 3 },
+  { id: "ha-cap",         group: "Hats & accessories", name: "Cap / visor panel",  w: 4.75, h: 2.75, price: 3 },
+  { id: "ha-tumbler-16",  group: "Hats & accessories", name: "Tumbler wrap 16 oz", w: 9.3,  h: 9,    price: 8 },
+  { id: "ha-tumbler-20",  group: "Hats & accessories", name: "Tumbler wrap 20 oz", w: 9.3,  h: 5,    price: 6 },
+  { id: "ha-cup-decal",   group: "Hats & accessories", name: "Small cup decal",    w: 4,    h: 4,    price: 3 },
 
   /* --- Gang sheets ------------------------------------------------------- */
-  { id: "gs-12x12",       group: "Gang sheets", name: "Small batch run", w: 12, h: 12, price: 12 },
-  { id: "gs-12x24",       group: "Gang sheets", name: "Standard gang sheet",      w: 12, h: 24, price: 22 },
-  { id: "gs-22x24",       group: "Gang sheets", name: "Larger production run",    w: 22, h: 24, price: 38 },
-  { id: "gs-24x36",       group: "Gang sheets", name: "Max standard sheet",   w: 24, h: 36, price: 60 }
+  { id: "gs-12x12",       group: "Gang sheets", name: "Small batch run",       w: 12, h: 12, price: 12 },
+  { id: "gs-12x24",       group: "Gang sheets", name: "Standard gang sheet",   w: 12, h: 24, price: 22 },
+  { id: "gs-22x24",       group: "Gang sheets", name: "Larger production run", w: 22, h: 24, price: 38 },
+  { id: "gs-24x36",       group: "Gang sheets", name: "Max standard sheet",    w: 24, h: 36, price: 60 }
 ];
 
 /* The widest film you can run through the printer, in inches. Anything in the
@@ -454,9 +536,10 @@ var TARGET_DPI = 300;
    so customers just copy the summary instead. */
 var SHOP = { name: "Anointed Ones Customs", email: "" };
 
-/* What the page starts with, so a first-time visitor sees how it works.
-   Keys are ids from the price list. Set to {} to start empty. */
-var STARTING_QUANTITIES = { "cp-chest": 1, "ff-adult": 1 };
+/* Colours used to tell one design from another on screen. Add more if your
+   customers routinely send more designs than there are colours here — the
+   list simply starts over when it runs out. */
+var DESIGN_COLORS = ["#C2632C", "#6C5AA8", "#2E7D57", "#B33A63", "#3B6FB0", "#8A6A1C"];
 
 /* ========================================================================== */
 
@@ -466,26 +549,35 @@ var SIZES = PRICE_LIST.filter(function (size) {
   return Math.min(size.w, size.h) <= MAX_PRINT_WIDTH_IN;
 });
 
+/* An order is a list of designs. Each one carries its own artwork AND its own
+   quantities, so two designs never share a placement count. */
 var state = {
-  fileName: "Sample artwork",
-  px: { w: 0, h: 0 },
-  qty: {},
-  focus: null
+  designs: [],
+  activeId: null,
+  focus: null,     /* which placement the preview is showing */
+  seq: 0
 };
 
 var el = {
+  designbar: document.getElementById("designbar"),
   artwork: document.getElementById("artwork"),
   placement: document.getElementById("placement"),
+  stage: document.getElementById("stage"),
   fitcap: document.getElementById("fitcap"),
+  blank: document.getElementById("blank"),
   viewer: document.getElementById("viewer"),
+  namefield: document.getElementById("namefield"),
+  dname: document.getElementById("dname"),
+  specList: document.getElementById("specList"),
+  specName: document.getElementById("specName"),
+  specPx: document.getElementById("specPx"),
+  specMax: document.getElementById("specMax"),
+  binding: document.getElementById("binding"),
   rows: document.getElementById("rows"),
   ticket: document.getElementById("ticket"),
   amount: document.getElementById("amount"),
   count: document.getElementById("count"),
   summary: document.getElementById("summary"),
-  specName: document.getElementById("specName"),
-  specPx: document.getElementById("specPx"),
-  specMax: document.getElementById("specMax"),
   file: document.getElementById("file"),
   said: document.getElementById("said"),
   email: document.getElementById("email")
@@ -496,15 +588,17 @@ var rowRefs = {};
 function money(n) { return "$" + n.toFixed(2); }
 function trim(n) { return String(parseFloat(n.toFixed(2))); }
 function inches(w, h) { return trim(w) + " × " + trim(h) + " in"; }
-function byId(id) { for (var i = 0; i < SIZES.length; i++) if (SIZES[i].id === id) return SIZES[i]; return null; }
+function sizeById(id) { for (var i = 0; i < SIZES.length; i++) if (SIZES[i].id === id) return SIZES[i]; return null; }
+function active() { for (var i = 0; i < state.designs.length; i++) if (state.designs[i].id === state.activeId) return state.designs[i]; return null; }
+function plural(n, one, many) { return n + " " + (n === 1 ? one : many); }
 
 /* --- The sizing maths --------------------------------------------------- */
 
 /* A transfer size is a box the artwork sits inside. The art is scaled down to
    fit, keeping its proportions, so it touches the box on one side and usually
    falls short on the other — that's the size that actually gets printed. */
-function measure(size) {
-  var iw = state.px.w, ih = state.px.h;
+function measure(design, size) {
+  var iw = design.px.w, ih = design.px.h;
   var art = iw / ih, box = size.w / size.h;
   var pw, ph, dpi;
   if (art >= box) {           /* art is the wider shape — width fills the box */
@@ -521,7 +615,52 @@ function quality(dpi) {
   return { text: "Too low", cls: "bad" };
 }
 
-/* --- Building the rows -------------------------------------------------- */
+/* --- Designs ------------------------------------------------------------- */
+
+function addDesign(src, fileName, px, name) {
+  state.seq += 1;
+  var design = {
+    id: "d" + state.seq,
+    name: name || fileName.replace(/\.[^.]+$/, "").slice(0, 40) || ("Design " + state.seq),
+    fileName: fileName,
+    src: src,
+    px: px,
+    qty: {},
+    color: DESIGN_COLORS[(state.seq - 1) % DESIGN_COLORS.length]
+  };
+  state.designs.push(design);
+  state.activeId = design.id;
+  return design;
+}
+
+function removeDesign(id) {
+  state.designs = state.designs.filter(function (d) { return d.id !== id; });
+  if (state.activeId === id) state.activeId = state.designs.length ? state.designs[0].id : null;
+  render();
+}
+
+function countFor(design) {
+  var n = 0;
+  SIZES.forEach(function (s) { n += design.qty[s.id] || 0; });
+  return n;
+}
+
+function totalFor(design) {
+  var t = 0;
+  SIZES.forEach(function (s) { t += (design.qty[s.id] || 0) * s.price; });
+  return t;
+}
+
+function linesFor(design) {
+  var out = [];
+  SIZES.forEach(function (size) {
+    var n = design.qty[size.id] || 0;
+    if (n > 0) out.push({ size: size, n: n, line: n * size.price });
+  });
+  return out;
+}
+
+/* --- Building the rows --------------------------------------------------- */
 
 function buildRows() {
   var lastGroup = null;
@@ -584,65 +723,201 @@ function buildRows() {
 }
 
 function bump(size, by) {
-  var next = (state.qty[size.id] || 0) + by;
+  var design = active();
+  if (!design) return;
+  var next = (design.qty[size.id] || 0) + by;
   if (next < 0) next = 0;
   if (next > 999) next = 999;
-  state.qty[size.id] = next;
+  design.qty[size.id] = next;
   state.focus = size.id;
   render();
 }
 
-/* --- Rendering ---------------------------------------------------------- */
-
-function lines() {
-  var out = [];
-  SIZES.forEach(function (size) {
-    var n = state.qty[size.id] || 0;
-    if (n > 0) out.push({ size: size, n: n, line: n * size.price });
-  });
-  return out;
-}
+/* --- Rendering ----------------------------------------------------------- */
 
 function render() {
-  var picked = lines();
-  var total = 0, count = 0;
-  picked.forEach(function (l) { total += l.line; count += l.n; });
+  var design = active();
+  renderDesignBar();
+  renderViewer(design);
+  renderRows(design);
+  renderTicket();
+  el.summary.value = summaryText();
+  updateEmailLink();
+  el.said.hidden = true;
+}
+
+function renderDesignBar() {
+  el.designbar.textContent = "";
+
+  state.designs.forEach(function (d) {
+    var tile = document.createElement("div");
+    tile.className = "tile" + (d.id === state.activeId ? " on" : "");
+
+    var main = document.createElement("button");
+    main.type = "button";
+    main.className = "tile-main";
+
+    var swatch = document.createElement("span");
+    swatch.className = "tile-swatch";
+    swatch.style.background = d.color;
+
+    var thumb = document.createElement("span");
+    thumb.className = "tile-thumb";
+    var img = document.createElement("img");
+    img.src = d.src;
+    img.alt = "";
+    thumb.appendChild(img);
+
+    var nm = document.createElement("span");
+    nm.className = "tile-name";
+    nm.textContent = d.name;
+
+    var ct = document.createElement("span");
+    ct.className = "tile-count";
+    var n = countFor(d);
+    ct.textContent = n === 0 ? "none yet" : plural(n, "transfer", "transfers");
+
+    main.appendChild(swatch);
+    main.appendChild(thumb);
+    main.appendChild(nm);
+    main.appendChild(ct);
+    main.addEventListener("click", function () { state.activeId = d.id; render(); });
+
+    var x = document.createElement("button");
+    x.type = "button";
+    x.className = "tile-x";
+    x.textContent = "×";
+    x.setAttribute("aria-label", "Remove " + d.name);
+    x.addEventListener("click", function (e) { e.stopPropagation(); removeDesign(d.id); });
+
+    tile.appendChild(main);
+    tile.appendChild(x);
+    el.designbar.appendChild(tile);
+  });
+
+  var add = document.createElement("button");
+  add.type = "button";
+  add.className = "tile-add";
+  add.textContent = state.designs.length ? "+ Add another design" : "+ Add a design";
+  add.addEventListener("click", function () { el.file.click(); });
+  el.designbar.appendChild(add);
+}
+
+function renderViewer(design) {
+  var size = state.focus ? sizeById(state.focus) : null;
+  var has = !!design;
+
+  el.stage.hidden = !has;
+  el.fitcap.hidden = !has;
+  el.blank.hidden = has;
+  el.namefield.hidden = !has;
+  el.specList.hidden = !has;
+
+  if (!has) { el.fitcap.textContent = ""; return; }
+
+  el.artwork.src = design.src;
+  el.dname.value = design.name;
+  el.specName.textContent = design.fileName;
+  el.specPx.textContent = design.px.w.toLocaleString() + " × " + design.px.h.toLocaleString() + " px";
+  el.specMax.textContent = inches(design.px.w / TARGET_DPI, design.px.h / TARGET_DPI);
+
+  if (!size) { el.fitcap.textContent = ""; return; }
+  var m = measure(design, size);
+  el.placement.style.setProperty("--ar", size.w / size.h);
+  el.fitcap.textContent = size.name + " · " + inches(size.w, size.h) +
+    " — art prints " + inches(m.pw, m.ph) + " at " + Math.round(m.dpi) + " dpi";
+}
+
+function renderRows(design) {
+  el.rows.className = "panel" + (design ? "" : " rows-off");
+
+  /* The binding line: whose quantities are these? */
+  el.binding.textContent = "";
+  if (!design) {
+    el.binding.appendChild(document.createTextNode("Add a design before choosing placements."));
+  } else {
+    var dot = document.createElement("span");
+    dot.className = "dot";
+    dot.style.background = design.color;
+    var lead = document.createTextNode("Setting quantities for ");
+    var strong = document.createElement("strong");
+    strong.textContent = design.name;
+    el.binding.appendChild(dot);
+    el.binding.appendChild(lead);
+    el.binding.appendChild(strong);
+    if (state.designs.length > 1) {
+      var muted = document.createElement("span");
+      muted.className = "muted";
+      muted.textContent = " · switch design above to price another one";
+      el.binding.appendChild(muted);
+    }
+  }
 
   SIZES.forEach(function (size) {
     var ref = rowRefs[size.id];
-    var n = state.qty[size.id] || 0;
-    var m = measure(size);
-    var q = quality(m.dpi);
+    var n = design ? (design.qty[size.id] || 0) : 0;
 
     ref.qty.textContent = n;
     ref.qty.className = "qty" + (n === 0 ? " zero" : "");
     ref.row.className = "row" + (state.focus === size.id ? " active" : "");
 
     ref.meta.textContent = "";
-    var chip = document.createElement("span");
-    chip.className = "chip " + q.cls;
-    chip.textContent = q.text + " · " + Math.round(m.dpi) + " dpi";
-    var note = document.createElement("span");
-    note.textContent = inches(size.w, size.h) +
-      (Math.abs(m.art - m.box) < 0.01 ? "" : "  → prints " + inches(m.pw, m.ph));
-    ref.meta.appendChild(chip);
-    ref.meta.appendChild(note);
+    if (design) {
+      var m = measure(design, size);
+      var q = quality(m.dpi);
+      var chip = document.createElement("span");
+      chip.className = "chip " + q.cls;
+      chip.textContent = q.text + " · " + Math.round(m.dpi) + " dpi";
+      var note = document.createElement("span");
+      note.textContent = inches(size.w, size.h) +
+        (Math.abs(m.art - m.box) < 0.01 ? "" : "  → prints " + inches(m.pw, m.ph));
+      ref.meta.appendChild(chip);
+      ref.meta.appendChild(note);
+
+      /* Same placement, other designs — so switching designs never looks
+         like the quantities you set a moment ago were lost. */
+      var others = 0;
+      state.designs.forEach(function (d) {
+        if (d.id !== design.id) others += d.qty[size.id] || 0;
+      });
+      if (others > 0) {
+        var elsewhere = document.createElement("span");
+        elsewhere.className = "elsewhere";
+        elsewhere.textContent = "+" + others + " on other designs";
+        ref.meta.appendChild(elsewhere);
+      }
+    } else {
+      var plain = document.createElement("span");
+      plain.textContent = inches(size.w, size.h);
+      ref.meta.appendChild(plain);
+    }
   });
+}
 
-  el.amount.textContent = money(total);
-  el.count.textContent = count === 0
-    ? "Nothing selected yet"
-    : count + (count === 1 ? " transfer" : " transfers") + " across " + picked.length +
-      (picked.length === 1 ? " placement" : " placements");
-
+function renderTicket() {
   el.ticket.textContent = "";
-  if (picked.length === 0) {
-    var empty = document.createElement("p");
-    empty.className = "ticket-empty";
-    empty.textContent = "Add a quantity above and your order builds here.";
-    el.ticket.appendChild(empty);
-  } else {
+  var grand = 0, transfers = 0, used = 0;
+
+  state.designs.forEach(function (d) {
+    var picked = linesFor(d);
+    if (!picked.length) return;
+    used += 1;
+
+    var head = document.createElement("div");
+    head.className = "ticket-design";
+    var dot = document.createElement("span");
+    dot.className = "dot";
+    dot.style.background = d.color;
+    var label = document.createElement("span");
+    label.textContent = d.name;
+    head.appendChild(dot);
+    head.appendChild(label);
+    el.ticket.appendChild(head);
+
+    var sub = 0;
     picked.forEach(function (l) {
+      sub += l.line;
+      transfers += l.n;
       var line = document.createElement("div");
       line.className = "ticket-line";
       var a = document.createElement("span");
@@ -654,81 +929,106 @@ function render() {
       line.appendChild(a); line.appendChild(b); line.appendChild(c);
       el.ticket.appendChild(line);
     });
+
+    var subRow = document.createElement("div");
+    subRow.className = "ticket-sub";
+    var sl = document.createElement("span");
+    sl.textContent = d.name + " subtotal";
+    var sv = document.createElement("span");
+    sv.textContent = money(sub);
+    subRow.appendChild(sl); subRow.appendChild(sv);
+    el.ticket.appendChild(subRow);
+
+    grand += sub;
+  });
+
+  if (used === 0) {
+    var empty = document.createElement("p");
+    empty.className = "ticket-empty";
+    empty.textContent = state.designs.length
+      ? "Add a quantity above and your order builds here."
+      : "Add a design to start your order.";
+    el.ticket.appendChild(empty);
+  } else {
     var foot = document.createElement("div");
     foot.className = "ticket-total";
     var fl = document.createElement("span");
     fl.className = "label";
-    fl.textContent = "Total";
+    fl.textContent = "Order total";
     var fv = document.createElement("span");
-    fv.textContent = money(total);
+    fv.textContent = money(grand);
     foot.appendChild(fl); foot.appendChild(fv);
     el.ticket.appendChild(foot);
   }
 
-  drawFit();
-  el.summary.value = summaryText(picked, total, count);
-  updateEmailLink();
-  el.said.hidden = true;
+  el.amount.textContent = money(grand);
+  el.count.textContent = transfers === 0
+    ? "Nothing selected yet"
+    : plural(transfers, "transfer", "transfers") + " across " + plural(used, "design", "designs");
 }
 
-/* Draws the transfer area as a dashed box with the artwork fitted inside it,
-   so you can see how much of the transfer the design actually covers. */
-function drawFit() {
-  var size = state.focus ? byId(state.focus) : null;
-  if (!size || !state.px.w) { el.fitcap.textContent = ""; return; }
-  var m = measure(size);
-  el.placement.style.setProperty("--ar", size.w / size.h);
-  el.fitcap.textContent = size.name + " · " + inches(size.w, size.h) +
-    " — art prints " + inches(m.pw, m.ph) + " at " + Math.round(m.dpi) + " dpi";
-}
-
-/* --- The summary the customer sends you --------------------------------- */
+/* --- The summary the customer sends you ---------------------------------- */
 
 function pad(s, n) { s = String(s); while (s.length < n) s += " "; return s; }
-function clip(s, n) { s = String(s); return s.length > n ? s.slice(0, n - 1) + "…" : pad(s, n); }
 function padL(s, n) { s = String(s); while (s.length < n) s = " " + s; return s; }
+function clip(s, n) { s = String(s); return s.length > n ? s.slice(0, n - 1) + "…" : pad(s, n); }
 
-function summaryText(picked, total, count) {
+function summaryText() {
   var date = new Date().toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
   var L = [];
   L.push("DTF TRANSFER ORDER · " + date + (SHOP.name ? " · " + SHOP.name : ""));
   L.push("");
   L.push(pad("Customer", 10) + (document.getElementById("cname").value || "—"));
   L.push(pad("Contact", 10) + (document.getElementById("cemail").value || "—"));
-  L.push(pad("Artwork", 10) + state.fileName +
-    (state.px.w ? "  (" + state.px.w + " × " + state.px.h + " px)" : ""));
-  L.push("");
 
-  if (picked.length === 0) {
-    L.push("No placements chosen yet.");
+  var ordered = state.designs.filter(function (d) { return linesFor(d).length > 0; });
+  var grand = 0, transfers = 0;
+
+  if (!ordered.length) {
+    L.push("");
+    L.push(state.designs.length ? "No placements chosen yet." : "No designs added yet.");
   } else {
-    L.push(pad("QTY", 4) + pad("PLACEMENT", 34) + pad("SIZE", 14) + padL("EACH", 8) + padL("LINE", 9));
-    L.push("-".repeat(69));
-    picked.forEach(function (l) {
-      L.push(pad(l.n + "×", 4) + clip(l.size.group + " · " + l.size.name, 34) +
-        pad(inches(l.size.w, l.size.h), 14) +
-        padL(money(l.size.price), 8) + padL(money(l.line), 9));
-    });
-    L.push("-".repeat(69));
-    L.push(pad(count + (count === 1 ? " transfer" : " transfers"), 52) +
-      padL("TOTAL", 8) + padL(money(total), 9));
+    L.push(pad("Designs", 10) + ordered.length);
 
-    var soft = picked.filter(function (l) { return measure(l.size).dpi < TARGET_DPI; });
-    if (soft.length) {
+    ordered.forEach(function (d, i) {
+      var picked = linesFor(d);
+      var sub = 0;
       L.push("");
-      L.push("Below " + TARGET_DPI + " dpi from this file — may print soft:");
-      soft.forEach(function (l) {
-        var m = measure(l.size);
-        L.push("  " + l.size.name + " (" + inches(l.size.w, l.size.h) + ") at " +
-          Math.round(m.dpi) + " dpi");
+      L.push("DESIGN " + (i + 1) + " — " + d.name);
+      L.push(pad("", 10) + d.fileName + "  (" + d.px.w + " × " + d.px.h + " px)");
+      L.push(pad("QTY", 4) + pad("PLACEMENT", 34) + pad("SIZE", 14) + padL("EACH", 8) + padL("LINE", 9));
+      L.push("-".repeat(69));
+      picked.forEach(function (l) {
+        sub += l.line;
+        transfers += l.n;
+        L.push(pad(l.n + "×", 4) + clip(l.size.group + " · " + l.size.name, 34) +
+          pad(inches(l.size.w, l.size.h), 14) +
+          padL(money(l.size.price), 8) + padL(money(l.line), 9));
       });
-    }
+      L.push(pad("", 52) + padL("Subtotal", 8) + padL(money(sub), 9));
+      grand += sub;
+
+      var soft = picked.filter(function (l) { return measure(d, l.size).dpi < TARGET_DPI; });
+      if (soft.length) {
+        L.push(pad("", 4) + "Below " + TARGET_DPI + " dpi from this file — may print soft:");
+        soft.forEach(function (l) {
+          L.push(pad("", 6) + l.size.name + " (" + inches(l.size.w, l.size.h) + ") at " +
+            Math.round(measure(d, l.size).dpi) + " dpi");
+        });
+      }
+    });
+
+    L.push("");
+    L.push("=".repeat(69));
+    L.push(pad(plural(transfers, "transfer", "transfers") + " across " +
+      plural(ordered.length, "design", "designs"), 49) +
+      padL("ORDER TOTAL", 11) + padL(money(grand), 9));
   }
 
   var notes = document.getElementById("cnotes").value.trim();
   if (notes) { L.push(""); L.push("NOTES"); L.push(notes); }
   L.push("");
-  L.push("(The artwork file is sent separately.)");
+  L.push("(Artwork files are sent separately — named to match the designs above.)");
   return L.join("\n");
 }
 
@@ -740,73 +1040,82 @@ function updateEmailLink() {
     "&body=" + encodeURIComponent(el.summary.value);
 }
 
-/* --- Loading artwork ----------------------------------------------------- */
+/* --- Loading artwork ------------------------------------------------------ */
 
-function adoptImage(src, name) {
+function loadImage(src, fileName, name, done) {
   var probe = new Image();
   probe.onload = function () {
-    state.px = { w: probe.naturalWidth, h: probe.naturalHeight };
-    state.fileName = name;
-    el.artwork.src = src;
-    el.specName.textContent = name;
-    el.specPx.textContent = state.px.w.toLocaleString() + " × " + state.px.h.toLocaleString() + " px";
-    el.specMax.textContent = inches(state.px.w / TARGET_DPI, state.px.h / TARGET_DPI);
+    addDesign(src, fileName, { w: probe.naturalWidth, h: probe.naturalHeight }, name);
+    if (done) done();
     render();
   };
   probe.onerror = function () {
-    el.specName.textContent = "Couldn't read that file — try a PNG or JPG.";
+    el.specName.textContent = "Couldn't read " + fileName + " — try a PNG or JPG.";
   };
   probe.src = src;
 }
 
-function takeFile(file) {
-  if (!file || file.type.indexOf("image/") !== 0) {
-    el.specName.textContent = "That's not an image file — try a PNG or JPG.";
-    return;
-  }
-  adoptImage(URL.createObjectURL(file), file.name);
+function takeFiles(files) {
+  var images = Array.prototype.filter.call(files, function (f) {
+    return f.type.indexOf("image/") === 0;
+  });
+  if (!images.length) return;
+  images.forEach(function (f) { loadImage(URL.createObjectURL(f), f.name, null); });
 }
 
 /* Stand-in artwork so the page shows real numbers before you drop yours in.
-   Drawn on a transparent background, the way a DTF file arrives. */
-function sampleArtwork() {
+   Drawn on transparent backgrounds, the way DTF files arrive. */
+function sampleEmblem() {
   var c = document.createElement("canvas");
   c.width = 1800; c.height = 2400;
   var x = c.getContext("2d");
   var cx = 900, cy = 1200;
-
-  x.lineWidth = 70;
-  x.strokeStyle = "#0E6D78";
+  x.lineWidth = 70; x.strokeStyle = "#0E6D78";
   x.beginPath(); x.arc(cx, cy, 620, 0, Math.PI * 2); x.stroke();
-
-  x.lineWidth = 22;
-  x.strokeStyle = "#C6853A";
+  x.lineWidth = 22; x.strokeStyle = "#C6853A";
   x.beginPath(); x.arc(cx, cy, 520, 0, Math.PI * 2); x.stroke();
-
   x.fillStyle = "#0E6D78";
   for (var i = 0; i < 3; i++) {
     var y = cy - 210 + i * 200;
     x.beginPath();
-    x.moveTo(cx - 300, y);
-    x.lineTo(cx, y + 150);
-    x.lineTo(cx + 300, y);
-    x.lineTo(cx + 300, y + 90);
-    x.lineTo(cx, y + 240);
-    x.lineTo(cx - 300, y + 90);
-    x.closePath();
-    x.fill();
+    x.moveTo(cx - 300, y); x.lineTo(cx, y + 150); x.lineTo(cx + 300, y);
+    x.lineTo(cx + 300, y + 90); x.lineTo(cx, y + 240); x.lineTo(cx - 300, y + 90);
+    x.closePath(); x.fill();
   }
   return c.toDataURL("image/png");
 }
 
-/* --- Wiring -------------------------------------------------------------- */
+function sampleWordmark() {
+  var c = document.createElement("canvas");
+  c.width = 2400; c.height = 1000;
+  var x = c.getContext("2d");
+  x.fillStyle = "#1D3B52";
+  [[120, 1500], [340, 2160], [560, 1080]].forEach(function (bar) {
+    x.fillRect(120, bar[0], bar[1], 140);
+  });
+  x.fillStyle = "#C6853A";
+  x.fillRect(120, 760, 2160, 40);
+  return c.toDataURL("image/png");
+}
+
+/* --- Wiring --------------------------------------------------------------- */
 
 document.getElementById("pick").addEventListener("click", function () { el.file.click(); });
-el.file.addEventListener("change", function (e) { takeFile(e.target.files[0]); });
+el.file.addEventListener("change", function (e) { takeFiles(e.target.files); e.target.value = ""; });
 
 document.getElementById("clear").addEventListener("click", function () {
-  state.qty = {};
+  state.designs.forEach(function (d) { d.qty = {}; });
   render();
+});
+
+el.dname.addEventListener("input", function () {
+  var d = active();
+  if (!d) return;
+  d.name = el.dname.value || "Untitled design";
+  renderDesignBar();
+  renderRows(d);
+  el.summary.value = summaryText();
+  updateEmailLink();
 });
 
 ["dragenter", "dragover"].forEach(function (ev) {
@@ -816,14 +1125,12 @@ document.getElementById("clear").addEventListener("click", function () {
   el.viewer.addEventListener(ev, function (e) { e.preventDefault(); el.viewer.classList.remove("drag"); });
 });
 el.viewer.addEventListener("drop", function (e) {
-  if (e.dataTransfer && e.dataTransfer.files.length) takeFile(e.dataTransfer.files[0]);
+  if (e.dataTransfer && e.dataTransfer.files.length) takeFiles(e.dataTransfer.files);
 });
 
 ["cname", "cemail", "cnotes"].forEach(function (id) {
   document.getElementById(id).addEventListener("input", function () {
-    var picked = lines(), total = 0, count = 0;
-    picked.forEach(function (l) { total += l.line; count += l.n; });
-    el.summary.value = summaryText(picked, total, count);
+    el.summary.value = summaryText();
     updateEmailLink();
   });
 });
@@ -850,11 +1157,22 @@ document.getElementById("hintLine").textContent =
   " in wide, any length. Tap a placement to see how your art sits in it.";
 
 buildRows();
-Object.keys(STARTING_QUANTITIES).forEach(function (id) {
-  if (rowRefs[id]) state.qty[id] = STARTING_QUANTITIES[id];
+state.focus = SIZES.length ? SIZES[0].id : null;
+
+/* Two sample designs, so the page opens showing how a multi-design order
+   reads. Remove them with the × on each tile. */
+loadImage(sampleEmblem(), "sample-emblem.png", "Sample emblem", function () {
+  var d = state.designs[state.designs.length - 1];
+  d.qty["ff-adult"] = 1;
+  d.qty["cp-chest"] = 1;
 });
-state.focus = Object.keys(state.qty)[0] || (SIZES.length ? SIZES[0].id : null);
-adoptImage(sampleArtwork(), "Sample artwork");
+loadImage(sampleWordmark(), "sample-wordmark.png", "Sample wordmark", function () {
+  var d = state.designs[state.designs.length - 1];
+  d.qty["sl-strip"] = 2;
+  d.qty["cn-collar"] = 1;
+  state.activeId = state.designs[0].id;
+  state.focus = "ff-adult";
+});
 </script>
 </body>
 </html>
