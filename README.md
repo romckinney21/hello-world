@@ -5,13 +5,16 @@ My name is Rodney, and I want to learn how to code.
 ## Print Quote Desk
 
 `index.html` is a self-contained print order calculator. A customer opens it,
-drops in their image, picks sizes and quantities, and sees the total — no
-back-and-forth needed to produce a quote.
+drops in their image, picks what they want and in which sizes, and sees the
+total — no back-and-forth needed to produce a quote.
 
 ### What it does
 
-- **Prices the order.** Flat price per size, multiplied by quantity, plus
-  optional sales tax and flat shipping.
+- **Prices the order.** Flat price per size for each product type (finished
+  prints and transfers out of the box), multiplied by quantity, plus optional
+  sales tax and flat shipping.
+- **Handles mixed orders.** Each line picks its own product and size, so one
+  order can be twelve 8×10 transfers and a single 16×20 print.
 - **Checks resolution.** If a customer adds their image, each line shows the
   effective DPI at that print size, graded as gallery quality (300+ DPI),
   good at arm's length (150–300), or will look soft (under 150). The file
@@ -21,8 +24,18 @@ back-and-forth needed to produce a quote.
 
 ### Editing your price list
 
-Click **Price list** in the header. Add, rename, resize, and reprice sizes,
-set your shop name, orders email, tax rate and shipping, then **Save**.
+Click **Price list** in the header. It has two parts:
+
+- **What you sell** — your product types. Rename them, add more (canvas,
+  framed, sticker sheets), or remove one you don't offer. Removing the
+  finished-print type leaves a transfers-only shop, and the product selector
+  disappears from the form.
+- **Price per size** — a grid of size against product type. **Leave a cell
+  blank if you don't offer that size in that product** and customers won't be
+  shown it, so transfers can run a different size range from prints.
+
+Below that, set your shop name, orders email, tax rate and shipping, then
+**Save**.
 
 The starting sizes and prices are placeholders — replace them with your own.
 
