@@ -20,7 +20,13 @@ total — no back-and-forth needed to produce a quote.
   good at arm's length (150–300), or will look soft (under 150). The file
   never leaves their browser — it is read locally to get pixel dimensions.
 - **Produces a job ticket.** A plain-text order summary they can copy, or
-  send straight to your orders email.
+  send straight to your orders email. Every order carries a reference
+  (`Q-XXXX-XXX`) so you and the customer can name the same order later.
+- **Prints to one page.** "Print or save as PDF" produces a clean job ticket
+  — reference, customer, artwork, line items, total — with the form chrome
+  stripped out.
+- **Checks itself before sending.** An order needs at least one item, a name,
+  and a valid email, so you never receive one you can't reply to.
 
 ### Editing your price list
 

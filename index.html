@@ -289,6 +289,19 @@ textarea{resize:vertical;min-height:74px;font-family:var(--font-body)}
 .ticket-foot{
   font-size:12.5px;color:var(--ink-muted);padding:0 18px 16px;
 }
+.form-error{
+  display:none;gap:7px;align-items:flex-start;margin-top:10px;
+  font-size:13px;color:var(--bad);background:var(--bad-wash);
+  border-radius:7px;padding:8px 10px;
+}
+.form-error.show{display:flex}
+.print-block{display:none}
+.print-block dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0;font-size:12px}
+.print-block dt{
+  font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-muted);padding-top:1px;
+}
+.print-block dd{margin:0}
 
 /* sticky mobile total */
 .mobile-total{
@@ -346,9 +359,14 @@ textarea{resize:vertical;min-height:74px;font-family:var(--font-body)}
 }
 
 @media print{
-  .masthead-actions,.drop,.step:not(.print-keep),.panel,.mobile-total,.ticket-actions,.footnote{display:none!important}
-  .layout{grid-template-columns:1fr}
-  .ticket{box-shadow:none;border-color:#000}
+  .masthead-actions,.drop,.step,.panel,.mobile-total,.ticket-actions,.footnote,.form-error{display:none!important}
+  .wrap{padding-block:0 0}
+  .layout{grid-template-columns:1fr;padding-top:18px}
+  .ticket-col{position:static}
+  .ticket{box-shadow:none;border:1px solid #000;break-inside:avoid}
+  .ticket-head{background:#000!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .print-block{display:block;margin-bottom:14px;padding-bottom:12px;border-bottom:1px dotted #999}
+  .perf::before,.perf::after{display:none}
 }
 </style>
 
@@ -407,6 +425,7 @@ textarea{resize:vertical;min-height:74px;font-family:var(--font-body)}
           <span class="ref" id="ticket-ref">&mdash;</span>
         </div>
         <div class="ticket-body">
+          <div class="print-block" id="print-block"></div>
           <div id="ticket-lines"></div>
           <div class="perf" aria-hidden="true"></div>
           <div class="sums" id="ticket-sums"></div>
@@ -414,9 +433,11 @@ textarea{resize:vertical;min-height:74px;font-family:var(--font-body)}
             <span class="total-label">Total</span>
             <span class="total-amt" id="total-amt">$0.00</span>
           </div>
+          <p class="form-error" id="form-error" role="alert"></p>
           <div class="ticket-actions">
             <button class="btn btn-primary" id="btn-send">Send this order</button>
             <button class="btn" id="btn-copy">Copy order summary</button>
+            <button class="btn" id="btn-print">Print or save as PDF</button>
           </div>
         </div>
         <p class="ticket-foot" id="ticket-foot">Prices are per print. Quantities multiply.</p>
@@ -516,7 +537,13 @@ textarea{resize:vertical;min-height:74px;font-family:var(--font-body)}
   var draftConfig = null; // working copy while the settings panel is open
 
   /* ---------- order state ---------- */
-  var order = { lines: [], name: "", email: "", notes: "" };
+  function newRef() {
+    var n = Date.now().toString(36).slice(-4).toUpperCase();
+    var r = Math.random().toString(36).slice(2, 5).toUpperCase();
+    return "Q-" + n + "-" + r;
+  }
+
+  var order = { lines: [], name: "", email: "", notes: "", ref: newRef() };
   var artwork = null; // {name, w, h, url}
 
   function products() { return config.products || []; }
@@ -557,7 +584,9 @@ textarea{resize:vertical;min-height:74px;font-family:var(--font-body)}
 
   try {
     var d = JSON.parse(localStorage.getItem(LS_DRAFT) || "null");
-    if (d && Array.isArray(d.lines)) order = { lines: d.lines, name: d.name || "", email: d.email || "", notes: d.notes || "" };
+    if (d && Array.isArray(d.lines)) {
+      order = { lines: d.lines, name: d.name || "", email: d.email || "", notes: d.notes || "", ref: d.ref || newRef() };
+    }
   } catch (e) { /* ignore */ }
 
   order.lines = order.lines.map(reconcileLine).filter(function (ln) { return ln.sizeId; });
@@ -701,7 +730,9 @@ textarea{resize:vertical;min-height:74px;font-family:var(--font-body)}
       }).join("");
     }
 
-    var sums = ['<div class="sum"><span>Subtotal</span><span class="amt">' + esc(money(t.subtotal)) + "</span></div>"];
+    var count = t.items.reduce(function (a, it) { return a + it.qty; }, 0);
+    var subLabel = "Subtotal" + (count ? " (" + count + (count === 1 ? " item" : " items") + ")" : "");
+    var sums = ['<div class="sum"><span>' + subLabel + '</span><span class="amt">' + esc(money(t.subtotal)) + "</span></div>"];
     if (t.shipping > 0) sums.push('<div class="sum"><span>Shipping</span><span class="amt">' + esc(money(t.shipping)) + "</span></div>");
     if (t.tax > 0) sums.push('<div class="sum"><span>Tax (' + esc(config.taxRatePct) + '%)</span><span class="amt">' + esc(money(t.tax)) + "</span></div>");
     el.ticketSums.innerHTML = sums.join("");
@@ -709,8 +740,22 @@ textarea{resize:vertical;min-height:74px;font-family:var(--font-body)}
     el.totalAmt.textContent = money(t.total);
     el.mobileAmt.textContent = money(t.total);
 
-    var count = t.items.reduce(function (a, it) { return a + it.qty; }, 0);
-    el.ticketRef.textContent = count ? count + (count === 1 ? " item" : " items") : "—";
+    el.ticketRef.textContent = order.ref;
+
+    renderPrintBlock();
+  }
+
+  // Details the on-screen form already carries, folded into the printed ticket.
+  function renderPrintBlock() {
+    var rows = [];
+    if (order.name) rows.push(["Customer", order.name]);
+    if (order.email) rows.push(["Email", order.email]);
+    rows.push(["Date", new Date().toLocaleDateString()]);
+    rows.push(["Artwork", artwork ? artwork.name + " (" + artwork.w + " × " + artwork.h + " px)" : "sent separately"]);
+    if (order.notes) rows.push(["Notes", order.notes]);
+    document.getElementById("print-block").innerHTML = "<dl>" + rows.map(function (r) {
+      return "<dt>" + esc(r[0]) + "</dt><dd>" + esc(r[1]) + "</dd>";
+    }).join("") + "</dl>";
   }
 
   function renderShop() {
@@ -760,7 +805,7 @@ textarea{resize:vertical;min-height:74px;font-family:var(--font-body)}
   ["name", "email", "notes"].forEach(function (k) {
     var input = document.getElementById("cust-" + k);
     input.value = order[k] || "";
-    input.addEventListener("input", function () { order[k] = input.value; saveDraft(); });
+    input.addEventListener("input", function () { order[k] = input.value; saveDraft(); renderPrintBlock(); });
   });
 
   /* ---------- artwork ---------- */
@@ -809,6 +854,7 @@ textarea{resize:vertical;min-height:74px;font-family:var(--font-body)}
     var t = totals();
     var out = [];
     out.push("PRINT ORDER — " + (config.shopName || "Print Shop"));
+    out.push("Order ref: " + order.ref);
     out.push("");
     if (order.name) out.push("Customer: " + order.name);
     if (order.email) out.push("Email:    " + order.email);
@@ -861,11 +907,53 @@ textarea{resize:vertical;min-height:74px;font-family:var(--font-body)}
     done(ok);
   }
 
-  document.getElementById("btn-send").addEventListener("click", function (e) {
+  function showError(msg, focusId) {
+    var box = document.getElementById("form-error");
+    box.textContent = msg;
+    box.classList.add("show");
+    if (focusId) {
+      var f = document.getElementById(focusId);
+      if (f) { f.focus(); f.scrollIntoView({ behavior: "smooth", block: "center" }); }
+    }
+  }
+
+  function clearError() {
+    document.getElementById("form-error").classList.remove("show");
+  }
+
+  // Everything the shop needs before an order is worth sending.
+  function validateOrder() {
     var t = totals();
-    if (!t.items.length) { renderTicket(); return; }
+    if (!t.items.length) {
+      showError("Add at least one item — pick a size and set a quantity above.");
+      return null;
+    }
+    if (!order.name.trim()) {
+      showError("Add your name so the shop knows whose order this is.", "cust-name");
+      return null;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(order.email.trim())) {
+      showError("Add an email address the shop can reply to.", "cust-email");
+      return null;
+    }
+    clearError();
+    return t;
+  }
+
+  ["name", "email"].forEach(function (k) {
+    document.getElementById("cust-" + k).addEventListener("input", clearError);
+  });
+
+  document.getElementById("btn-print").addEventListener("click", function () {
+    renderTicket();
+    window.print();
+  });
+
+  document.getElementById("btn-send").addEventListener("click", function (e) {
+    var t = validateOrder();
+    if (!t) return;
     if (config.orderEmail) {
-      var subject = "Print order — " + (order.name || "new customer") + " — " + money(t.total);
+      var subject = "Print order " + order.ref + " — " + order.name + " — " + money(t.total);
       window.location.href = "mailto:" + encodeURIComponent(config.orderEmail) +
         "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(summaryText());
     } else {
